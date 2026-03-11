@@ -17,7 +17,8 @@ function fmtEuro(n: number | null | undefined): string {
 
 function fmtEuroK(n: number | null | undefined): string {
   if (n == null) return "—";
-  if (n >= 1000) return `${Math.round(n / 1000)}k €`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(".", ",")}M €`;
+  if (n >= 10_000) return `${(n / 1_000).toFixed(1).replace(".", ",")}k €`;
   return n.toLocaleString("fr-FR") + " €";
 }
 

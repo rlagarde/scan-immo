@@ -10,6 +10,7 @@ import Map, {
   ScaleControl,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useTheme } from "next-themes";
 import type { MapPoint } from "@/hooks/use-dvf";
 import type { MapRef } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
@@ -20,8 +21,10 @@ const INITIAL_VIEW = {
   zoom: 8,
 };
 
-const TILE_URL =
+const TILE_LIGHT =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const TILE_DARK =
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
 function pointsToGeoJSON(points: MapPoint[]): GeoJSON {
   return {
@@ -61,10 +64,12 @@ interface PopupInfo {
 const INTERACTIVE_ZOOM = 12;
 
 export function DvfHeatmap({ points }: { points: MapPoint[] }) {
+  const { resolvedTheme } = useTheme();
   const mapRef = useRef<MapRef>(null);
   const [popupInfo, setPopupInfo] = useState<PopupInfo | null>(null);
   const [geojson, setGeojson] = useState<GeoJSON>(pointsToGeoJSON([]));
   const [cursor, setCursor] = useState<string>("grab");
+  const tileUrl = resolvedTheme === "dark" ? TILE_DARK : TILE_LIGHT;
 
   useEffect(() => {
     setGeojson(pointsToGeoJSON(points));
@@ -94,7 +99,7 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
         ref={mapRef}
         initialViewState={INITIAL_VIEW}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={TILE_URL}
+        mapStyle={tileUrl}
         interactiveLayerIds={["terrain-points"]}
         onClick={onClick}
         cursor={cursor}

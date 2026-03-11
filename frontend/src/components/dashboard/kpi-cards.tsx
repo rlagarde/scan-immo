@@ -3,14 +3,20 @@
 import { Home, Euro, Ruler, BarChart3, DoorOpen, Building2, TreePine, type LucideIcon } from "lucide-react";
 import type { KpiData } from "@/hooks/use-dvf";
 
+function formatCompact(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(2).replace(".", ",") + "M";
+  if (n >= 10_000) return (n / 1_000).toFixed(1).replace(".", ",") + "k";
+  return n.toLocaleString("fr-FR");
+}
+
 function formatNumber(n: number | null | undefined): string {
   if (n == null) return "—";
-  return n.toLocaleString("fr-FR");
+  return formatCompact(n);
 }
 
 function formatPrice(n: number | null | undefined): string {
   if (n == null) return "—";
-  return n.toLocaleString("fr-FR") + " €";
+  return formatCompact(n) + " €";
 }
 
 interface KpiItem {
