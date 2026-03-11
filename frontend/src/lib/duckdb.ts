@@ -8,20 +8,25 @@ export async function getDB(): Promise<duckdb.AsyncDuckDB> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    // Use locally hosted files (avoids COEP cross-origin issues)
+    // Use jsdelivr CDN for DuckDB WASM bundles (not bundled in git/deploy)
+    const CDN = "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.33.1-dev20.0/dist";
     const DUCKDB_BUNDLES = await duckdb.selectBundle({
       mvp: {
-        mainModule: "/duckdb/duckdb-mvp.wasm",
-        mainWorker: "/duckdb/duckdb-browser-mvp.worker.js",
+        mainModule: `${CDN}/duckdb-mvp.wasm`,
+        mainWorker: `${CDN}/duckdb-browser-mvp.worker.js`,
       },
       eh: {
-        mainModule: "/duckdb/duckdb-eh.wasm",
-        mainWorker: "/duckdb/duckdb-browser-eh.worker.js",
+        mainModule: `${CDN}/duckdb-eh.wasm`,
+        mainWorker: `${CDN}/duckdb-browser-eh.worker.js`,
       },
     });
 
     const logger = new duckdb.ConsoleLogger();
-    const worker = new Worker(DUCKDB_BUNDLES.mainWorker!);
+    // Create worker via blob URL to bypass cross-origin restrictions with COEP
+    const workerUrl = DUCKDB_BUNDLES.mainWorker!;
+    const workerScript = await fetch(workerUrl).then((r) => r.text());
+    const blob = new Blob([workerScript], { type: "application/javascript" });
+    const worker = new Worker(URL.createObjectURL(blob));
     db = new duckdb.AsyncDuckDB(logger, worker);
     await db.instantiate(DUCKDB_BUNDLES.mainModule);
 
