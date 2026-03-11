@@ -1,11 +1,11 @@
 {
-  "name": "DVF Dashboard — Landes & Pyrénées-Atlantiques",
-  "short_name": "DVF Dashboard",
-  "description": "Transactions immobilières DVF pour les départements 40 et 64",
+  "name": "scan-immo — Landes & Pyrénées-Atlantiques",
+  "short_name": "scan-immo",
+  "description": "Dashboard interactif des transactions immobilières pour les départements 40 et 64",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#f59e0b",
   "orientation": "portrait-primary",
   "icons": [
     {

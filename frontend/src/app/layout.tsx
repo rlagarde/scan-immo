@@ -15,14 +15,14 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "DVF Dashboard — Landes & Pyrénées-Atlantiques",
+  title: "scan-immo — Landes & Pyrénées-Atlantiques",
   description:
-    "Dashboard interactif des transactions immobilières (DVF) pour les départements 40 et 64",
+    "Dashboard interactif des transactions immobilières pour les départements 40 et 64",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "DVF Dashboard",
+    title: "scan-immo",
   },
 };
 
