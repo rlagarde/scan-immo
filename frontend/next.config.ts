@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Empty turbopack config so Next.js 16 doesn't error when falling back to webpack
+  turbopack: {},
   // Use webpack instead of Turbopack (DuckDB-WASM needs webpack config)
   webpack: (config, { isServer }) => {
     if (!isServer) {
