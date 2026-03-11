@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useDvf, type Filters, DEFAULT_FILTERS } from "@/hooks/use-dvf";
 import { KpiCardsTerrain } from "@/components/dashboard/kpi-cards";
 import { FiltersBarTerrain } from "@/components/dashboard/filters-bar";
@@ -15,6 +14,7 @@ import { CommuneTable } from "@/components/dashboard/commune-table";
 import { FocusCommune } from "@/components/dashboard/focus-commune";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { NavHeader } from "@/components/nav-header";
 
 const DvfHeatmap = dynamic(
   () => import("@/components/map/dvf-heatmap").then((mod) => mod.DvfHeatmap),
@@ -77,19 +77,7 @@ export default function TerrainsPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">DVF — Terrains</h1>
-            <p className="text-sm text-muted-foreground">
-              Terrains — Landes (40) &amp; Pyrénées-Atlantiques (64)
-            </p>
-          </div>
-          <Link href="/" className="text-sm font-medium text-primary hover:underline">
-            ← Habitations
-          </Link>
-        </div>
-      </header>
+      <NavHeader />
 
       <div className="container mx-auto px-4 py-4 space-y-4">
         <FiltersBarTerrain

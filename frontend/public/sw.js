@@ -1,4 +1,4 @@
-const CACHE_NAME = "dvf-dashboard-v1";
+const CACHE_NAME = "dvf-dashboard-v2";
 const PRECACHE_URLS = ["/", "/data/dvf.parquet"];
 
 self.addEventListener("install", (event) => {
@@ -30,13 +30,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for parquet data and static assets
-  if (
-    request.url.includes("/data/") ||
-    request.url.includes(".wasm") ||
-    request.url.includes(".js") ||
-    request.url.includes(".css")
-  ) {
+  // Network-first for Next.js chunks (hash changes each build)
+  if (request.url.includes("/_next/")) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Cache-first for parquet data and WASM
+  if (request.url.includes("/data/") || request.url.includes(".wasm")) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>

@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useDvf, type Filters, DEFAULT_FILTERS } from "@/hooks/use-dvf";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { FiltersBar } from "@/components/dashboard/filters-bar";
@@ -19,6 +18,7 @@ import { CommuneTable } from "@/components/dashboard/commune-table";
 import { FocusCommune } from "@/components/dashboard/focus-commune";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { NavHeader } from "@/components/nav-header";
 
 // Dynamic import for map (no SSR - maplibre needs window)
 const DvfMap = dynamic(
@@ -84,19 +84,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">DVF — Habitations</h1>
-            <p className="text-sm text-muted-foreground">
-              Maisons &amp; Appartements — Landes (40) &amp; Pyrénées-Atlantiques (64)
-            </p>
-          </div>
-          <Link href="/terrains" className="text-sm font-medium text-primary hover:underline">
-            Terrains →
-          </Link>
-        </div>
-      </header>
+      <NavHeader />
 
       <div className="container mx-auto px-4 py-4 space-y-4">
         <FiltersBar
@@ -108,10 +96,10 @@ export default function Home() {
         <KpiCards data={kpis} />
 
         <Tabs defaultValue="carte" className="w-full">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="carte">Carte</TabsTrigger>
-            <TabsTrigger value="prix">Prix</TabsTrigger>
-            <TabsTrigger value="communes">Communes</TabsTrigger>
+          <TabsList className="w-full justify-start gap-2 bg-transparent p-0">
+            <TabsTrigger value="carte" className="bg-muted">Carte</TabsTrigger>
+            <TabsTrigger value="prix" className="bg-muted">Prix</TabsTrigger>
+            <TabsTrigger value="communes" className="bg-muted">Communes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="carte" className="mt-4">
