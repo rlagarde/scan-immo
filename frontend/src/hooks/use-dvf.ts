@@ -229,11 +229,11 @@ export function useDvf(initialFilters: Filters = DEFAULT_FILTERS) {
             SELECT t.annee::INTEGER as annee, t.nom_commune,
               MEDIAN(t.valeur_fonciere)::INTEGER as prix_median
             FROM dvf t
-            INNER JOIN (
+            WHERE t.nom_commune IN (
               SELECT nom_commune FROM dvf ${where}
               GROUP BY nom_commune ORDER BY COUNT(*) DESC LIMIT 15
-            ) top ON t.nom_commune = top.nom_commune
-            ${where}
+            )
+            ${where ? where.replace("WHERE", "AND") : ""}
             GROUP BY t.annee, t.nom_commune
             ORDER BY t.annee, t.nom_commune
           `),
