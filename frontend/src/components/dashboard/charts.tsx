@@ -22,6 +22,13 @@ import type {
   PriceDistBucket,
 } from "@/hooks/use-dvf";
 
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: "var(--popover)",
+  borderColor: "var(--border)",
+  color: "var(--popover-foreground)",
+  borderRadius: "0.5rem",
+};
+
 const TYPE_COLORS: Record<string, string> = {
   Maison: "#2563eb",
   Appartement: "#f59e0b",
@@ -52,6 +59,7 @@ export function PriceEvolutionChart({ data }: { data: TimeSeriesPoint[] }) {
             <XAxis dataKey="annee" className="text-xs" />
             <YAxis tickFormatter={formatEuro} className="text-xs" width={70} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [formatEuro(Number(value)), "Prix médian"]}
             />
@@ -90,6 +98,7 @@ export function PriceM2ByTypeChart({ data }: { data: TimeSeriesByType[] }) {
             <XAxis dataKey="annee" className="text-xs" />
             <YAxis tickFormatter={formatEuroFull} className="text-xs" width={80} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [formatEuroFull(Number(value)), String(name)]}
             />
@@ -130,6 +139,7 @@ export function TransactionsByTypeChart({ data }: { data: TimeSeriesByType[] }) 
             <XAxis dataKey="annee" className="text-xs" />
             <YAxis className="text-xs" width={50} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [Number(value).toLocaleString("fr-FR"), String(name)]}
             />
@@ -158,6 +168,7 @@ export function PriceDistributionChart({ data }: { data: PriceDistBucket[] }) {
             <XAxis dataKey="bucket" className="text-xs" angle={-30} textAnchor="end" height={50} />
             <YAxis className="text-xs" width={50} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [Number(value).toLocaleString("fr-FR"), "Transactions"]}
             />
@@ -189,6 +200,7 @@ export function CommunePrixM2Chart({ data, onCommuneClick }: { data: CommuneStat
             <XAxis type="number" tickFormatter={formatEuroFull} className="text-xs" />
             <YAxis type="category" dataKey="nom_commune" width={130} className="text-xs" tick={{ fontSize: 11, cursor: onCommuneClick ? "pointer" : "default" }} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [formatEuroFull(Number(value)), "Prix/m²"]}
             />
@@ -232,6 +244,7 @@ export function PriceByPiecesChart({ data }: { data: TimeSeriesByPieces[] }) {
             <XAxis dataKey="annee" className="text-xs" />
             <YAxis tickFormatter={formatEuro} className="text-xs" width={70} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [formatEuro(Number(value)), String(name)]}
             />
@@ -278,6 +291,7 @@ export function PriceByCommuneChart({ data }: { data: TimeSeriesByCommune[] }) {
             <XAxis dataKey="annee" className="text-xs" />
             <YAxis tickFormatter={formatEuro} className="text-xs" width={70} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [formatEuro(Number(value)), String(name)]}
             />
@@ -312,6 +326,7 @@ export function CommunePrixMedianChart({ data, onCommuneClick }: { data: Commune
             <XAxis type="number" tickFormatter={formatEuro} className="text-xs" />
             <YAxis type="category" dataKey="nom_commune" width={130} className="text-xs" tick={{ fontSize: 11, cursor: onCommuneClick ? "pointer" : "default" }} />
             <Tooltip
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [formatEuro(Number(value)), "Prix médian"]}
             />

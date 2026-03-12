@@ -63,13 +63,34 @@ interface PopupInfo {
 }
 
 const PRICE_COLOR_STOPS: (string | number)[] = [
-  0, "#2166ac",
-  100000, "#67a9cf",
-  200000, "#d1e5f0",
-  300000, "#fddb77",
-  400000, "#ef8a62",
-  600000, "#b2182b",
+  0, "#fef3c7",
+  100000, "#fde68a",
+  200000, "#fcd34d",
+  300000, "#f59e0b",
+  400000, "#ea580c",
+  600000, "#c2410c",
 ];
+
+function createSquareSDF(size: number) {
+  const data = new Uint8ClampedArray(size * size * 4);
+  const half = size / 2;
+  const squareHalf = half - 2;
+  const buffer = 3;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = squareHalf - Math.abs(x - half + 0.5);
+      const dy = squareHalf - Math.abs(y - half + 0.5);
+      const dist = Math.min(dx, dy);
+      const alpha = Math.max(0, Math.min(255, 192 + (dist / buffer) * 64));
+      const idx = (y * size + x) * 4;
+      data[idx] = 0;
+      data[idx + 1] = 0;
+      data[idx + 2] = 0;
+      data[idx + 3] = Math.round(alpha);
+    }
+  }
+  return { width: size, height: size, data };
+}
 
 export function DvfMap({ points }: { points: MapPoint[] }) {
   const { resolvedTheme } = useTheme();
@@ -82,6 +103,12 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
   useEffect(() => {
     setGeojson(pointsToGeoJSON(points));
   }, [points]);
+
+  const onMapLoad = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || map.hasImage("square-sdf")) return;
+    map.addImage("square-sdf", createSquareSDF(24), { sdf: true });
+  }, []);
 
   const onClick = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,13 +129,15 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
   );
 
   return (
-    <div className="w-full h-[400px] lg:h-[500px] rounded-lg overflow-hidden border">
+    <div className="w-full">
+      <div className="h-[400px] lg:h-[500px] rounded-lg overflow-hidden border">
       <Map
         ref={mapRef}
         initialViewState={INITIAL_VIEW}
         style={{ width: "100%", height: "100%" }}
         mapStyle={tileUrl}
-        interactiveLayerIds={["hab-maison-circles", "hab-appart-circles"]}
+        interactiveLayerIds={["hab-maison-circles", "hab-appart-symbols"]}
+        onLoad={onMapLoad}
         onClick={onClick}
         cursor={cursor}
         onMouseEnter={() => setCursor("pointer")}
@@ -152,12 +181,12 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
                 "interpolate",
                 ["linear"],
                 ["heatmap-density"],
-                0, "rgba(33,102,172,0)",
-                0.2, "rgb(103,169,207)",
-                0.4, "rgb(209,229,240)",
-                0.6, "rgb(253,219,119)",
-                0.8, "rgb(239,138,98)",
-                1, "rgb(178,24,43)",
+                0, "rgba(245,158,11,0)",
+                0.2, "rgba(253,230,138,0.4)",
+                0.4, "rgba(252,211,77,0.5)",
+                0.6, "rgba(245,158,11,0.6)",
+                0.8, "rgba(234,88,12,0.7)",
+                1, "rgba(194,65,12,0.8)",
               ],
               "heatmap-radius": [
                 "interpolate",
@@ -171,7 +200,7 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
                 "interpolate",
                 ["linear"],
                 ["zoom"],
-                11, 0.8,
+                11, 0.6,
                 14, 0,
               ],
             }}
@@ -192,7 +221,7 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
                 ...PRICE_COLOR_STOPS,
               ],
               "circle-stroke-width": 1,
-              "circle-stroke-color": "#fff",
+              "circle-stroke-color": resolvedTheme === "dark" ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)",
               "circle-opacity": [
                 "interpolate",
                 ["linear"],
@@ -210,30 +239,26 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
             }}
           />
 
-          {/* Appartement — smaller circles with thicker dark stroke */}
+          {/* Appartement — square symbols */}
           <Layer
-            id="hab-appart-circles"
-            type="circle"
+            id="hab-appart-symbols"
+            type="symbol"
             minzoom={10}
             filter={["==", ["get", "type_local"], "Appartement"]}
+            layout={{
+              "icon-image": "square-sdf",
+              "icon-size": ["interpolate", ["linear"], ["zoom"], 10, 0.25, 14, 0.5, 18, 0.85],
+              "icon-allow-overlap": true,
+              "icon-ignore-placement": true,
+            }}
             paint={{
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2, 14, 5, 18, 10],
-              "circle-color": [
+              "icon-color": [
                 "interpolate",
                 ["linear"],
                 ["get", "valeur_fonciere"],
                 ...PRICE_COLOR_STOPS,
               ],
-              "circle-stroke-width": 2,
-              "circle-stroke-color": "#333",
-              "circle-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10, 0,
-                12, 0.85,
-              ],
-              "circle-stroke-opacity": [
+              "icon-opacity": [
                 "interpolate",
                 ["linear"],
                 ["zoom"],
@@ -274,17 +299,17 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
           </Popup>
         )}
       </Map>
+      </div>
 
       {/* Legend */}
       <div className="flex gap-3 mt-2 text-xs text-muted-foreground px-1 items-center flex-wrap">
         <span>Prix :</span>
         {[
-          { color: "#2166ac", label: "< 100k" },
-          { color: "#67a9cf", label: "100k" },
-          { color: "#d1e5f0", label: "200k" },
-          { color: "#fddb77", label: "300k" },
-          { color: "#ef8a62", label: "400k" },
-          { color: "#b2182b", label: "600k+" },
+          { color: "#fde68a", label: "< 100k" },
+          { color: "#fcd34d", label: "200k" },
+          { color: "#f59e0b", label: "300k" },
+          { color: "#ea580c", label: "400k" },
+          { color: "#c2410c", label: "600k+" },
         ].map((s) => (
           <span key={s.label} className="flex items-center gap-1">
             <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
@@ -293,11 +318,11 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
         ))}
         <span className="ml-2 border-l pl-2 flex items-center gap-2">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-full border border-muted-foreground bg-muted" />
+            <span className="inline-block w-3 h-3 rounded-full bg-amber-400" />
             Maison
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-full border-2 border-gray-700 bg-muted" />
+            <span className="inline-block w-3 h-3 bg-amber-400" />
             Appart.
           </span>
         </span>

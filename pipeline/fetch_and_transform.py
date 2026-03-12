@@ -86,7 +86,7 @@ def run_pipeline():
     FROM dvf_raw
     WHERE
         nature_mutation = 'Vente'
-        AND TRY_CAST(valeur_fonciere AS DOUBLE) > 0
+        AND TRY_CAST(valeur_fonciere AS DOUBLE) >= 500
         AND TRY_CAST(longitude AS DOUBLE) IS NOT NULL
         AND TRY_CAST(latitude AS DOUBLE) IS NOT NULL
         AND (
@@ -129,10 +129,15 @@ def run_pipeline():
             AVG(longitude) AS longitude,
             AVG(latitude) AS latitude,
             FIRST(annee) AS annee,
+            -- Nombre total de lots dans la mutation
+            COUNT(*)::INTEGER AS nb_lots,
             -- Nombre de bâtis principaux dans la mutation
             COUNT(*) FILTER (WHERE type_local IN ('Maison', 'Appartement'))::INTEGER AS nb_batis,
-            -- nature_culture (pour les terrains)
-            FIRST(nature_culture) FILTER (WHERE nature_culture IS NOT NULL) AS nature_culture
+            -- nature_culture : priorité "terrains à bâtir" si présent dans la mutation
+            COALESCE(
+                FIRST(nature_culture) FILTER (WHERE nature_culture = 'terrains à bâtir'),
+                FIRST(nature_culture) FILTER (WHERE nature_culture IS NOT NULL)
+            ) AS nature_culture
         FROM dvf_clean
         GROUP BY id_mutation
     )
@@ -151,8 +156,14 @@ def run_pipeline():
         longitude,
         latitude,
         annee,
+        nb_lots,
         nb_batis,
-        (nb_batis > 1) AS vente_multiple,
+        -- Vente multiple : plusieurs bâtis principaux OU (terrain avec 4+ parcelles)
+        -- Terrains : 2-3 parcelles attenantes = vente normale entre particuliers
+        CASE
+            WHEN type_local IN ('Maison', 'Appartement') THEN nb_batis > 1
+            ELSE nb_lots > 3
+        END AS vente_multiple,
         nature_culture,
         -- Prix au m²
         CASE

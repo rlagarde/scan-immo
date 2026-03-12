@@ -94,7 +94,8 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
   );
 
   return (
-    <div className="w-full h-[400px] lg:h-[500px] rounded-lg overflow-hidden border">
+    <div className="w-full">
+      <div className="h-[400px] lg:h-[500px] rounded-lg overflow-hidden border">
       <Map
         ref={mapRef}
         initialViewState={INITIAL_VIEW}
@@ -144,12 +145,12 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
                 "interpolate",
                 ["linear"],
                 ["heatmap-density"],
-                0, "rgba(33,102,172,0)",
-                0.2, "rgb(103,169,207)",
-                0.4, "rgb(209,229,240)",
-                0.6, "rgb(253,219,119)",
-                0.8, "rgb(239,138,98)",
-                1, "rgb(178,24,43)",
+                0, "rgba(245,158,11,0)",
+                0.2, "rgba(253,230,138,0.4)",
+                0.4, "rgba(252,211,77,0.5)",
+                0.6, "rgba(245,158,11,0.6)",
+                0.8, "rgba(234,88,12,0.7)",
+                1, "rgba(194,65,12,0.8)",
               ],
               "heatmap-radius": [
                 "interpolate",
@@ -163,7 +164,7 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
                 "interpolate",
                 ["linear"],
                 ["zoom"],
-                11, 0.8,
+                11, 0.6,
                 13, 0,
               ],
             }}
@@ -186,15 +187,15 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
                 "interpolate",
                 ["linear"],
                 ["get", "valeur_fonciere"],
-                0, "#2166ac",
-                50000, "#67a9cf",
-                100000, "#d1e5f0",
-                150000, "#fddb77",
-                250000, "#ef8a62",
-                500000, "#b2182b",
+                0, "#fef3c7",
+                50000, "#fde68a",
+                100000, "#fcd34d",
+                150000, "#f59e0b",
+                250000, "#ea580c",
+                500000, "#c2410c",
               ],
               "circle-stroke-width": 1,
-              "circle-stroke-color": "#fff",
+              "circle-stroke-color": resolvedTheme === "dark" ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)",
               "circle-opacity": [
                 "interpolate",
                 ["linear"],
@@ -235,28 +236,29 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
           </Popup>
         )}
       </Map>
+      </div>
 
       {/* Legend */}
       <div className="flex gap-3 mt-2 text-xs text-muted-foreground px-1 items-center">
         <span>Prix :</span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#2166ac" }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#fde68a" }} />
           &lt; 50k
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#67a9cf" }} />
-          50k
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#fcd34d" }} />
+          100k
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#fddb77" }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#f59e0b" }} />
           150k
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#ef8a62" }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#ea580c" }} />
           250k
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#b2182b" }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#c2410c" }} />
           500k+
         </span>
       </div>
