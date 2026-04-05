@@ -18,7 +18,7 @@ interface FiltersBarProps {
   communes: string[];
 }
 
-const YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
+const YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
 const DEPARTEMENT_OPTIONS = [
   { value: "40", label: "40 — Landes" },

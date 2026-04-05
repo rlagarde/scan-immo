@@ -1,6 +1,10 @@
 """
-Pipeline DVF : télécharge les CSV géolocalisés (Etalab) et exporte en Parquet optimisé.
-Départements 40 (Landes) et 64 (Pyrénées-Atlantiques), années 2020-2025.
+Pipeline DVF : télécharge les CSV géolocalisés et exporte en Parquet optimisé.
+Départements 40 (Landes) et 64 (Pyrénées-Atlantiques), années 2018-2025.
+
+Deux sources combinées :
+- 2020-2025 : geo-dvf Etalab "latest" (à jour mensuellement)
+- 2018-2019 : dataset "Compilation DVF par département" (snapshot 2023-05, gelé)
 
 Agrégation par id_mutation (une ligne par vente) :
 - type_local dérivé par priorité : Maison > Appartement > Terrain
@@ -14,18 +18,26 @@ import os
 import sys
 
 DEPARTMENTS = ["40", "64"]
-YEARS = range(2020, 2026)
-BASE_URL = "https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dep}.csv.gz"
+GEO_YEARS = range(2020, 2026)
+GEO_URL = "https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dep}.csv.gz"
+
+# Dataset "Compilation DVF par département" (snapshot 2023-05-05, couvre 2018-2022)
+# On l'utilise uniquement pour 2018-2019 (geo-dvf couvre 2020+)
+COMPILATION_URLS = {
+    "40": "https://static.data.gouv.fr/resources/compilation-des-donnees-de-valeurs-foncieres-dvf-par-departement/20230505-170401/dvf-40.csv",
+    "64": "https://static.data.gouv.fr/resources/compilation-des-donnees-de-valeurs-foncieres-dvf-par-departement/20230505-170215/dvf-64.csv",
+}
+COMPILATION_YEARS = {"2018", "2019"}
+
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "data")
 
-
-def build_urls():
-    """Génère la liste des URLs CSV à télécharger."""
-    urls = []
-    for year in YEARS:
-        for dep in DEPARTMENTS:
-            urls.append(BASE_URL.format(year=year, dep=dep))
-    return urls
+# Colonnes extraites de chaque source (identiques dans les deux schémas)
+COMMON_COLS = [
+    "id_mutation", "date_mutation", "nature_mutation", "valeur_fonciere",
+    "code_postal", "code_commune", "nom_commune", "code_departement",
+    "type_local", "surface_reelle_bati", "nombre_pieces_principales",
+    "nature_culture", "surface_terrain", "longitude", "latitude",
+]
 
 
 def run_pipeline():
@@ -37,18 +49,33 @@ def run_pipeline():
     # Activer le téléchargement HTTP
     con.execute("INSTALL httpfs; LOAD httpfs;")
 
-    urls = build_urls()
-    print(f"Téléchargement de {len(urls)} fichiers CSV...")
+    cols_select = ", ".join(COMMON_COLS)
 
-    # Lire tous les CSV en une seule requête UNION ALL
-    union_parts = []
-    for url in urls:
-        union_parts.append(
-            f"SELECT *, '{url}' as source_url FROM read_csv_auto('{url}', "
-            f"compression='gzip', all_varchar=true, header=true)"
+    # Source 1 : geo-dvf (2020-2025), un fichier par (dep, year), gzip
+    geo_parts = []
+    for year in GEO_YEARS:
+        for dep in DEPARTMENTS:
+            url = GEO_URL.format(year=year, dep=dep)
+            geo_parts.append(
+                f"SELECT {cols_select} FROM read_csv_auto('{url}', "
+                f"compression='gzip', all_varchar=true, header=true)"
+            )
+
+    # Source 2 : compilation par dept (2018-2022), un fichier par dep, CSV non compressé
+    # On filtre sur les années 2018-2019 uniquement (les autres sont déjà dans geo-dvf)
+    compilation_years_sql = ", ".join(f"'{y}'" for y in sorted(COMPILATION_YEARS))
+    compilation_parts = []
+    for dep, url in COMPILATION_URLS.items():
+        compilation_parts.append(
+            f"SELECT {cols_select} FROM read_csv_auto('{url}', "
+            f"all_varchar=true, header=true) "
+            f"WHERE annee IN ({compilation_years_sql})"
         )
 
-    union_query = " UNION ALL ".join(union_parts)
+    all_parts = geo_parts + compilation_parts
+    print(f"Téléchargement de {len(all_parts)} sources CSV...")
+
+    union_query = " UNION ALL ".join(all_parts)
 
     # Nettoyage et typage
     transform_query = f"""
