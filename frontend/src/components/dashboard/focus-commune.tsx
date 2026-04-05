@@ -1,8 +1,16 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { CrosstabRow, TransactionRow } from "@/hooks/use-dvf";
 
 function fmt(n: number | null | undefined): string {
@@ -17,8 +25,8 @@ function fmtEuro(n: number | null | undefined): string {
 
 function fmtEuroK(n: number | null | undefined): string {
   if (n == null) return "—";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(".", ",")}M €`;
-  if (n >= 10_000) return `${(n / 1_000).toFixed(1).replace(".", ",")}k €`;
+  if (n >= 1_000_000) return `${Math.round(n / 1_000_000)}M €`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}k €`;
   return n.toLocaleString("fr-FR") + " €";
 }
 
@@ -81,8 +89,81 @@ function CrosstabTable({ data }: { data: CrosstabRow[] }) {
   );
 }
 
-// --- Transactions list ---
+// --- Transactions list (sortable) ---
+type TxSortKey = "date" | "price" | "surface" | "prix_m2" | "pieces";
+type SortDir = "asc" | "desc";
+
+interface SortHeaderProps {
+  label: string;
+  sortKey: TxSortKey;
+  currentKey: TxSortKey;
+  dir: SortDir;
+  onSort: (key: TxSortKey) => void;
+  align?: "left" | "right";
+}
+
+function SortHeader({ label, sortKey, currentKey, dir, onSort, align = "right" }: SortHeaderProps) {
+  const active = currentKey === sortKey;
+  const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className={cn("py-2 pr-3 font-medium", align === "right" ? "text-right" : "text-left")}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={cn(
+          "inline-flex items-center gap-1 hover:text-foreground transition-colors",
+          active && "text-foreground"
+        )}
+      >
+        {label}
+        <Icon className="h-3 w-3" />
+      </button>
+    </th>
+  );
+}
+
+function rowSurface(row: TransactionRow): number {
+  return row.surface_reelle_bati ?? row.surface_terrain ?? 0;
+}
+
 function TransactionsList({ data }: { data: TransactionRow[] }) {
+  const [sortKey, setSortKey] = useState<TxSortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const handleSort = (key: TxSortKey) => {
+    if (key === sortKey) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const arr = [...data];
+    arr.sort((a, b) => {
+      let av: number, bv: number;
+      if (sortKey === "date") {
+        av = new Date(a.date_mutation).getTime();
+        bv = new Date(b.date_mutation).getTime();
+      } else if (sortKey === "price") {
+        av = a.valeur_fonciere ?? 0;
+        bv = b.valeur_fonciere ?? 0;
+      } else if (sortKey === "prix_m2") {
+        av = a.prix_m2 ?? 0;
+        bv = b.prix_m2 ?? 0;
+      } else if (sortKey === "pieces") {
+        av = a.nombre_pieces_principales ?? 0;
+        bv = b.nombre_pieces_principales ?? 0;
+      } else {
+        av = rowSurface(a);
+        bv = rowSurface(b);
+      }
+      return sortDir === "asc" ? av - bv : bv - av;
+    });
+    return arr;
+  }, [data, sortKey, sortDir]);
+
   if (data.length === 0) return null;
 
   return (
@@ -94,16 +175,16 @@ function TransactionsList({ data }: { data: TransactionRow[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
-              <th className="py-2 pr-3 font-medium">Date</th>
+              <SortHeader label="Date" sortKey="date" currentKey={sortKey} dir={sortDir} onSort={handleSort} align="left" />
               <th className="py-2 pr-3 font-medium">Type</th>
-              <th className="py-2 pr-3 font-medium text-right">Prix</th>
-              <th className="py-2 pr-3 font-medium text-right">Prix/m²</th>
-              <th className="py-2 pr-3 font-medium text-right">Surface</th>
-              <th className="py-2 font-medium text-right">Pièces</th>
+              <SortHeader label="Prix" sortKey="price" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortHeader label="Prix/m²" sortKey="prix_m2" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortHeader label="Surface" sortKey="surface" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortHeader label="Pièces" sortKey="pieces" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
             </tr>
           </thead>
           <tbody>
-            {data.map((row, i) => (
+            {sorted.map((row, i) => (
               <tr key={i} className="border-b hover:bg-accent/30">
                 <td className="py-1.5 pr-3 text-xs text-muted-foreground">{row.date_mutation}</td>
                 <td className="py-1.5 pr-3">
@@ -124,7 +205,7 @@ function TransactionsList({ data }: { data: TransactionRow[] }) {
   );
 }
 
-// --- Main Focus Commune ---
+// --- Main Focus Commune (Dialog) ---
 export function FocusCommune({
   commune,
   crosstab,
@@ -132,27 +213,23 @@ export function FocusCommune({
   onClose,
   showCrosstab = true,
 }: {
-  commune: string;
+  commune: string | null;
   crosstab: CrosstabRow[];
   transactions: TransactionRow[];
   onClose: () => void;
   showCrosstab?: boolean;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <h2 className="text-lg font-bold">{commune}</h2>
-        <button
-          onClick={onClose}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="h-4 w-4" />
-          Fermer
-        </button>
-      </div>
-
-      {showCrosstab && <CrosstabTable data={crosstab} />}
-      <TransactionsList data={transactions} />
-    </div>
+    <Dialog open={!!commune} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">{commune}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {showCrosstab && <CrosstabTable data={crosstab} />}
+          <TransactionsList data={transactions} />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

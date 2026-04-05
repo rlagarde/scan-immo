@@ -119,12 +119,15 @@ DuckDB côté Python aussi : on utilise le même moteur des deux côtés. Un sim
 
 | Mode | Description | Adapté pour |
 |------|-------------|-------------|
-| **Cercles colorés** | Un point par transaction, couleur = prix/m² (gradient bleu→rouge) | Voir chaque transaction, idéal quand on zoome |
-| **Clusters** | Regroupe les points proches, affiche le nombre | Vue dézoomée, évite la surcharge visuelle |
-| **Heatmap** | Densité colorée, zones chaudes/froides | Visualiser les zones de forte activité |
-| **Combo clusters + cercles** | Clusters au dézoom, cercles au zoom | Meilleure UX globale |
+| **Heatmap + points** | Heatmap au dézoom (densité), points individuels au zoom | Vue d'ensemble puis détail |
+| **Clusters + cercles** | Regroupe les points proches, cercles au zoom | Alternatif, plus classique |
 
-**Recommandation** : **Combo clusters + cercles colorés** — clusters quand on voit tout le département, puis cercles individuels colorés par prix/m² quand on zoome sur une commune.
+**Choix retenu** : **Heatmap + points colorés** — heatmap amber (palette jaune→orange) au dézoom pour visualiser la densité, transition vers des points individuels colorés par prix au zoom. Deux cartes distinctes :
+
+- **Carte Habitations** : symbologie différenciée — cercles pour les maisons, carrés (SDF) pour les appartements. Palette amber sur le prix (de #fef3c7 à #c2410c).
+- **Carte Terrains** : cercles uniformes, échelle de prix adaptée aux terrains (0→500k€ vs 0→600k€ pour l'habitation).
+
+Les contours des points sont thème-aware (noirs en dark, blancs en light, opacité 0.4).
 
 ---
 
@@ -151,7 +154,33 @@ DuckDB côté Python aussi : on utilise le même moteur des deux côtés. Un sim
 
 ---
 
-## 4. Résumé des choix
+## 4. Qualité des données (pipeline)
+
+### Filtrage des transactions
+
+| Filtre | Règle | Raison |
+|--------|-------|--------|
+| **Nature mutation** | `Vente` uniquement | Exclut échanges, expropriations, adjudications |
+| **Prix minimum** | ≥ 500 € | Exclut les micro-transactions symboliques (1€ cadastral, cessions internes) qui faussent les médianes |
+| **Géolocalisation** | longitude et latitude non nulles | Nécessaire pour la cartographie |
+| **Types de biens** | Maison, Appartement, Dépendance, ou terrain (surface > 0) | Filtre les lignes sans objet exploitable |
+
+### Détection des ventes multiples (`vente_multiple`)
+
+Objectif : séparer les ventes "normales" entre particuliers des ventes promoteurs/groupées qui faussent les statistiques de prix.
+
+| Type de bien | Règle | Justification |
+|-------------|-------|---------------|
+| **Maison / Appartement** | `nb_batis > 1` | Plusieurs bâtis principaux = vente promoteur. Un appartement + parking (dépendance) reste une vente simple car `nb_batis` ne compte que les Maison/Appartement |
+| **Terrain** | `nb_lots > 3` | 1-3 parcelles attenantes = vente normale entre particuliers. 4+ parcelles = probable lotissement promoteur |
+
+### Attribution `nature_culture` (terrains)
+
+Quand une mutation contient plusieurs parcelles avec des `nature_culture` différentes (ex: "sols" + "terrains à bâtir"), on prioritise "terrains à bâtir" via `COALESCE(FIRST(...) FILTER (WHERE = 'terrains à bâtir'), FIRST(...))`. Cela corrige le problème des mutations mixtes mal labellisées qui disparaissaient du filtre "terrains à bâtir".
+
+---
+
+## 5. Résumé des choix
 
 | Décision | Choix retenu |
 |----------|-------------|
@@ -160,7 +189,8 @@ DuckDB côté Python aussi : on utilise le même moteur des deux côtés. Un sim
 | Package manager | npm (déjà installé) |
 | Node | v22.17 |
 | Python | 3.13 |
-| Tuiles carte | Carto Positron (clair) |
-| Visu carte | Clusters + cercles colorés par prix/m² |
+| Tuiles carte | Carto Positron (clair) / Dark Matter (sombre) — switch auto selon le thème |
+| Visu carte | Heatmap + points colorés (cercles maisons, carrés appartements), palette amber |
+| Qualité données | Exclusion micro-transactions (< 500€), détection vente_multiple (nb_batis pour bâtis, nb_lots > 3 pour terrains), priorité "terrains à bâtir" dans nature_culture |
 | Déploiement | Vercel |
 | Langue UI | Français |

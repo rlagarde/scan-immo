@@ -114,34 +114,26 @@ export default function Home() {
               <TransactionsByTypeChart data={timeSeriesByType} />
               <PriceDistributionChart data={priceDistribution} />
             </div>
+
+            <PriceByCommuneChart data={timeSeriesByCommune} topN={5} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CommunePrixM2Chart data={communeStats} />
+              <CommunePrixMedianChart data={communeStats} />
+            </div>
           </TabsContent>
 
           <TabsContent value="communes" className="mt-4 space-y-4">
-            <PriceByCommuneChart data={timeSeriesByCommune} />
-
-            {focusCommune ? (
-              <FocusCommune
-                commune={focusCommune}
-                crosstab={crosstab}
-                transactions={transactions}
-                onClose={() => setFocusCommune(null)}
-              />
-            ) : null}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <CommunePrixM2Chart
-                data={communeStats}
-                onCommuneClick={setFocusCommune}
-              />
-              <CommunePrixMedianChart
-                data={communeStats}
-                onCommuneClick={setFocusCommune}
-              />
-            </div>
-
             <CommuneTable
               data={communeStats}
               onCommuneClick={setFocusCommune}
+            />
+
+            <FocusCommune
+              commune={focusCommune}
+              crosstab={crosstab}
+              transactions={transactions}
+              onClose={() => setFocusCommune(null)}
             />
           </TabsContent>
         </Tabs>

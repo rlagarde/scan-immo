@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Euro, Ruler, BarChart3, DoorOpen, Building2, TreePine, type LucideIcon } from "lucide-react";
+import { Home, Euro, Ruler, BarChart3, TreePine, type LucideIcon } from "lucide-react";
 import type { KpiData } from "@/hooks/use-dvf";
 
 function formatCompact(n: number): string {
@@ -50,8 +50,6 @@ export function KpiCards({ data }: { data: KpiData | null }) {
     { title: "Prix médian", value: formatPrice(data?.prixMedian), icon: Euro },
     { title: "Prix/m²", value: formatPrice(data?.prixM2Median), icon: Home },
     { title: "Surface méd.", value: data?.surfaceMediane ? `${formatNumber(data.surfaceMediane)} m²` : "—", icon: Ruler },
-    { title: "Pièces moy.", value: data?.piecesMoyen != null ? String(data.piecesMoyen) : "—", icon: DoorOpen },
-    { title: "Surface bâtie", value: data?.surfaceBatiMoyenne ? `${formatNumber(data.surfaceBatiMoyenne)} m²` : "—", icon: Building2 },
   ];
   return <KpiStrip items={items} />;
 }

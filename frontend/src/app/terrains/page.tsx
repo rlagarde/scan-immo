@@ -104,28 +104,24 @@ export default function TerrainsPage() {
               <PriceEvolutionChart data={timeSeries} />
               <PriceDistributionChart data={priceDistribution} />
             </div>
+
+            <PriceByCommuneChart data={timeSeriesByCommune} topN={5} />
+
+            <CommunePrixMedianChart data={communeStats} />
           </TabsContent>
 
           <TabsContent value="communes" className="mt-4 space-y-4">
-            <PriceByCommuneChart data={timeSeriesByCommune} />
-
-            {focusCommune ? (
-              <FocusCommune
-                commune={focusCommune}
-                crosstab={crosstab}
-                transactions={transactions}
-                onClose={() => setFocusCommune(null)}
-                showCrosstab={false}
-              />
-            ) : null}
-
-            <CommunePrixMedianChart
-              data={communeStats}
-              onCommuneClick={setFocusCommune}
-            />
             <CommuneTable
               data={communeStats}
               onCommuneClick={setFocusCommune}
+            />
+
+            <FocusCommune
+              commune={focusCommune}
+              crosstab={crosstab}
+              transactions={transactions}
+              onClose={() => setFocusCommune(null)}
+              showCrosstab={false}
             />
           </TabsContent>
         </Tabs>

@@ -128,7 +128,7 @@ export interface TimeSeriesByPieces {
 export interface TimeSeriesByCommune {
   annee: number;
   nom_commune: string;
-  prix_median: number;
+  nb_transactions: number;
 }
 
 export interface CrosstabRow {
@@ -227,7 +227,7 @@ export function useDvf(initialFilters: Filters = DEFAULT_FILTERS) {
           `),
           queryDvf<TimeSeriesByCommune>(`
             SELECT t.annee::INTEGER as annee, t.nom_commune,
-              MEDIAN(t.valeur_fonciere)::INTEGER as prix_median
+              COUNT(*)::INTEGER as nb_transactions
             FROM dvf t
             WHERE t.nom_commune IN (
               SELECT nom_commune FROM dvf ${where}

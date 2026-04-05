@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { YearRangePicker } from "@/components/ui/year-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Filters } from "@/hooks/use-dvf";
 
@@ -16,6 +17,8 @@ interface FiltersBarProps {
   onFilterChange: (filters: Filters) => void;
   communes: string[];
 }
+
+const YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
 
 const DEPARTEMENT_OPTIONS = [
   { value: "40", label: "40 — Landes" },
@@ -47,90 +50,55 @@ export function FiltersBar({
   const communeOptions = communes.map((c) => ({ value: c, label: c }));
 
   return (
-    <div className="flex flex-wrap gap-4 items-end">
+    <div className="flex flex-wrap gap-2 items-center">
       <MultiSelect
-        label="Département"
         options={DEPARTEMENT_OPTIONS}
         selected={filters.departements}
         onChange={(v) => update({ departements: v, communes: [] })}
-        placeholder="Tous les départements"
+        placeholder="Département"
       />
 
       <MultiSelect
-        label="Type de bien"
-        options={TYPE_OPTIONS}
-        selected={filters.typesLocal}
-        onChange={(v) => update({ typesLocal: v })}
-        placeholder="Tous les types"
-      />
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">Depuis</span>
-        <Select
-          value={String(filters.anneeMin)}
-          onValueChange={(v) => v && update({ anneeMin: Number(v) })}
-        >
-          <SelectTrigger className="w-[100px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
-              <SelectItem key={y} value={String(y)}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">Jusqu&apos;à</span>
-        <Select
-          value={String(filters.anneeMax)}
-          onValueChange={(v) => v && update({ anneeMax: Number(v) })}
-        >
-          <SelectTrigger className="w-[100px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
-              <SelectItem key={y} value={String(y)}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <MultiSelect
-        label="Pièces"
-        options={PIECES_OPTIONS}
-        selected={filters.pieces.map(String)}
-        onChange={(v) => update({ pieces: v.map(Number) })}
-        placeholder="Toutes"
-      />
-
-      <MultiSelect
-        label="Commune"
         options={communeOptions}
         selected={filters.communes}
         onChange={(v) => update({ communes: v })}
-        placeholder="Toutes les communes"
+        placeholder="Commune"
       />
 
-      <label className="flex items-center gap-2 cursor-pointer self-center pb-1">
+      <YearRangePicker
+        min={filters.anneeMin}
+        max={filters.anneeMax}
+        years={YEARS}
+        onChange={update}
+      />
+
+      <MultiSelect
+        options={TYPE_OPTIONS}
+        selected={filters.typesLocal}
+        onChange={(v) => update({ typesLocal: v })}
+        placeholder="Type de bien"
+      />
+
+      <MultiSelect
+        options={PIECES_OPTIONS}
+        selected={filters.pieces.map(String)}
+        onChange={(v) => update({ pieces: v.map(Number) })}
+        placeholder="Pièces"
+      />
+
+      <label className="flex items-center gap-2 cursor-pointer self-center">
         <Checkbox
           checked={filters.venteSimple}
           onCheckedChange={(checked) => update({ venteSimple: !!checked })}
         />
-        <span className="text-xs text-muted-foreground">Exclure ventes multiples (promoteur)</span>
+        <span className="text-xs text-muted-foreground">Exclure ventes multiples</span>
       </label>
     </div>
   );
 }
 
 const SURFACE_TERRAIN_OPTIONS = [
-  { value: "", label: "Sans limite" },
+  { value: "", label: "Surface: sans limite" },
   { value: "1000", label: "≤ 1 000 m²" },
   { value: "2000", label: "≤ 2 000 m²" },
   { value: "5000", label: "≤ 5 000 m²" },
@@ -161,87 +129,50 @@ export function FiltersBarTerrain({
   const communeOptions = communes.map((c) => ({ value: c, label: c }));
 
   return (
-    <div className="flex flex-wrap gap-4 items-end">
+    <div className="flex flex-wrap gap-2 items-center">
       <MultiSelect
-        label="Département"
         options={DEPARTEMENT_OPTIONS}
         selected={filters.departements}
         onChange={(v) => update({ departements: v, communes: [] })}
-        placeholder="Tous les départements"
+        placeholder="Département"
       />
 
       <MultiSelect
-        label="Nature du terrain"
-        options={NATURE_CULTURE_OPTIONS}
-        selected={filters.natureCultures}
-        onChange={(v) => update({ natureCultures: v })}
-        placeholder="Toutes natures"
-      />
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">Surface max</span>
-        <Select
-          value={filters.surfaceTerrainMax != null ? String(filters.surfaceTerrainMax) : ""}
-          onValueChange={(v) => update({ surfaceTerrainMax: v ? Number(v) : null })}
-        >
-          <SelectTrigger className="w-[140px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SURFACE_TERRAIN_OPTIONS.map((o) => (
-              <SelectItem key={o.value || "none"} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">Depuis</span>
-        <Select
-          value={String(filters.anneeMin)}
-          onValueChange={(v) => v && update({ anneeMin: Number(v) })}
-        >
-          <SelectTrigger className="w-[100px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
-              <SelectItem key={y} value={String(y)}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">Jusqu&apos;à</span>
-        <Select
-          value={String(filters.anneeMax)}
-          onValueChange={(v) => v && update({ anneeMax: Number(v) })}
-        >
-          <SelectTrigger className="w-[100px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
-              <SelectItem key={y} value={String(y)}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <MultiSelect
-        label="Commune"
         options={communeOptions}
         selected={filters.communes}
         onChange={(v) => update({ communes: v })}
-        placeholder="Toutes les communes"
+        placeholder="Commune"
       />
+
+      <YearRangePicker
+        min={filters.anneeMin}
+        max={filters.anneeMax}
+        years={YEARS}
+        onChange={update}
+      />
+
+      <MultiSelect
+        options={NATURE_CULTURE_OPTIONS}
+        selected={filters.natureCultures}
+        onChange={(v) => update({ natureCultures: v })}
+        placeholder="Nature du terrain"
+      />
+
+      <Select
+        value={filters.surfaceTerrainMax != null ? String(filters.surfaceTerrainMax) : ""}
+        onValueChange={(v) => update({ surfaceTerrainMax: v ? Number(v) : null })}
+      >
+        <SelectTrigger className="w-[160px] h-9">
+          <SelectValue placeholder="Surface max" />
+        </SelectTrigger>
+        <SelectContent>
+          {SURFACE_TERRAIN_OPTIONS.map((o) => (
+            <SelectItem key={o.value || "none"} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

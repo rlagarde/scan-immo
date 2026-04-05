@@ -29,6 +29,9 @@ const TOOLTIP_STYLE: React.CSSProperties = {
   borderRadius: "0.5rem",
 };
 
+// Cursor overlay for bar charts (semi-transparent, theme-aware via currentColor)
+const BAR_CURSOR = { fill: "currentColor", fillOpacity: 0.08 };
+
 const TYPE_COLORS: Record<string, string> = {
   Maison: "#2563eb",
   Appartement: "#f59e0b",
@@ -140,6 +143,7 @@ export function TransactionsByTypeChart({ data }: { data: TimeSeriesByType[] }) 
             <YAxis className="text-xs" width={50} />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
+              cursor={BAR_CURSOR}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [Number(value).toLocaleString("fr-FR"), String(name)]}
             />
@@ -169,6 +173,7 @@ export function PriceDistributionChart({ data }: { data: PriceDistBucket[] }) {
             <YAxis className="text-xs" width={50} />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
+              cursor={BAR_CURSOR}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [Number(value).toLocaleString("fr-FR"), "Transactions"]}
             />
@@ -201,6 +206,7 @@ export function CommunePrixM2Chart({ data, onCommuneClick }: { data: CommuneStat
             <YAxis type="category" dataKey="nom_commune" width={130} className="text-xs" tick={{ fontSize: 11, cursor: onCommuneClick ? "pointer" : "default" }} />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
+              cursor={BAR_CURSOR}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [formatEuroFull(Number(value)), "Prix/m²"]}
             />
@@ -266,15 +272,28 @@ const COMMUNE_COLORS = [
   "#14b8a6", "#e11d48", "#a855f7", "#0ea5e9", "#d946ef",
 ];
 
-export function PriceByCommuneChart({ data }: { data: TimeSeriesByCommune[] }) {
-  const communesList = [...new Set(data.map((d) => d.nom_commune))];
-  const years = [...new Set(data.map((d) => d.annee))].sort();
+export function PriceByCommuneChart({ data, topN }: { data: TimeSeriesByCommune[]; topN?: number }) {
+  let filtered = data;
+  if (topN) {
+    const totals = new Map<string, number>();
+    data.forEach((d) => {
+      totals.set(d.nom_commune, (totals.get(d.nom_commune) ?? 0) + d.nb_transactions);
+    });
+    const top = [...totals.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, topN)
+      .map(([c]) => c);
+    const topSet = new Set(top);
+    filtered = data.filter((d) => topSet.has(d.nom_commune));
+  }
+  const communesList = [...new Set(filtered.map((d) => d.nom_commune))];
+  const years = [...new Set(filtered.map((d) => d.annee))].sort();
   const pivoted = years.map((annee) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const row: any = { annee };
     communesList.forEach((c) => {
-      const match = data.find((d) => d.annee === annee && d.nom_commune === c);
-      row[c] = match?.prix_median ?? null;
+      const match = filtered.find((d) => d.annee === annee && d.nom_commune === c);
+      row[c] = match?.nb_transactions ?? null;
     });
     return row;
   });
@@ -282,18 +301,18 @@ export function PriceByCommuneChart({ data }: { data: TimeSeriesByCommune[] }) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Prix médian par commune (top 15)</CardTitle>
+        <CardTitle className="text-base">Ventes par commune (top {topN ?? 15})</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={pivoted}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis dataKey="annee" className="text-xs" />
-            <YAxis tickFormatter={formatEuro} className="text-xs" width={70} />
+            <YAxis className="text-xs" width={50} />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any, name: any) => [formatEuro(Number(value)), String(name)]}
+              formatter={(value: any, name: any) => [Number(value).toLocaleString("fr-FR"), String(name)]}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {communesList.map((c, i) => (
@@ -327,6 +346,7 @@ export function CommunePrixMedianChart({ data, onCommuneClick }: { data: Commune
             <YAxis type="category" dataKey="nom_commune" width={130} className="text-xs" tick={{ fontSize: 11, cursor: onCommuneClick ? "pointer" : "default" }} />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
+              cursor={BAR_CURSOR}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [formatEuro(Number(value)), "Prix médian"]}
             />
