@@ -145,7 +145,7 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
           type="geojson"
           data={geojson}
           cluster={true}
-          clusterMaxZoom={11}
+          clusterMaxZoom={9}
           clusterRadius={50}
         >
           {/* Cluster circles */}
