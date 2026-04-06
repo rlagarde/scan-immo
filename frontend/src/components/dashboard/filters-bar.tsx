@@ -16,6 +16,7 @@ interface FiltersBarProps {
   filters: Filters;
   onFilterChange: (filters: Filters) => void;
   communes: string[];
+  vertical?: boolean;
 }
 
 const YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
@@ -43,6 +44,7 @@ export function FiltersBar({
   filters,
   onFilterChange,
   communes,
+  vertical,
 }: FiltersBarProps) {
   const update = (partial: Partial<Filters>) =>
     onFilterChange({ ...filters, ...partial });
@@ -50,7 +52,7 @@ export function FiltersBar({
   const communeOptions = communes.map((c) => ({ value: c, label: c }));
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className={vertical ? "flex flex-col gap-3" : "flex flex-wrap gap-2 items-center"}>
       <MultiSelect
         options={DEPARTEMENT_OPTIONS}
         selected={filters.departements}
@@ -122,6 +124,7 @@ export function FiltersBarTerrain({
   filters,
   onFilterChange,
   communes,
+  vertical,
 }: FiltersBarProps) {
   const update = (partial: Partial<Filters>) =>
     onFilterChange({ ...filters, ...partial });
@@ -129,7 +132,7 @@ export function FiltersBarTerrain({
   const communeOptions = communes.map((c) => ({ value: c, label: c }));
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className={vertical ? "flex flex-col gap-3" : "flex flex-wrap gap-2 items-center"}>
       <MultiSelect
         options={DEPARTEMENT_OPTIONS}
         selected={filters.departements}

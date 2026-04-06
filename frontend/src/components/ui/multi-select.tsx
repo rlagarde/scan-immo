@@ -86,7 +86,7 @@ export function MultiSelect({
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center justify-between min-w-[160px] h-9 px-3 text-sm rounded-md border border-input bg-background hover:bg-accent/50 transition-colors",
+          "flex items-center justify-between min-w-[160px] w-full h-9 px-3 text-sm rounded-md border border-input bg-background hover:bg-accent/50 transition-colors",
           open && "ring-1 ring-ring"
         )}
       >
@@ -97,7 +97,7 @@ export function MultiSelect({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 z-50 mt-1 w-[220px] rounded-md border bg-popover p-1.5 shadow-md">
+        <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[220px] rounded-md border bg-popover p-1.5 shadow-md">
           {options.length > 6 && (
             <input
               ref={inputRef}

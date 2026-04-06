@@ -15,8 +15,11 @@ import {
 import { CommuneEvolutionTable } from "@/components/dashboard/commune-evolution";
 import { FocusCommune } from "@/components/dashboard/focus-commune";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, SlidersHorizontal } from "lucide-react";
 import { NavHeader } from "@/components/nav-header";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useState } from "react";
 
 // Dynamic import for map (no SSR - maplibre needs window)
 const DvfMap = dynamic(
@@ -28,6 +31,45 @@ const HABITATION_FILTERS: Filters = {
   ...DEFAULT_FILTERS,
   typesLocal: ["Maison", "Appartement"],
 };
+
+function MobileFiltersSheet({
+  filters,
+  onFilterChange,
+  communes,
+}: {
+  filters: Filters;
+  onFilterChange: (f: Filters) => void;
+  communes: string[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="sm:hidden">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium bg-muted hover:bg-accent transition-colors">
+          <SlidersHorizontal className="h-4 w-4" />
+          Filtres
+        </SheetTrigger>
+        <SheetContent side="right" className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Filtres</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-3 mt-2">
+            <FiltersBar
+              filters={filters}
+              onFilterChange={onFilterChange}
+              communes={communes}
+              vertical
+            />
+          </div>
+          <div className="mt-6 pt-4 border-t">
+            <ThemeToggle />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
 
 function MapSkeleton() {
   return (
@@ -85,7 +127,17 @@ export default function Home() {
       <NavHeader />
 
       <div className="container mx-auto px-4 py-4 space-y-4">
-        <FiltersBar
+        {/* Desktop: inline filters */}
+        <div className="hidden sm:block">
+          <FiltersBar
+            filters={filters}
+            onFilterChange={setFilters}
+            communes={communes}
+          />
+        </div>
+
+        {/* Mobile: filters in sheet */}
+        <MobileFiltersSheet
           filters={filters}
           onFilterChange={setFilters}
           communes={communes}

@@ -42,7 +42,9 @@ export function NavHeader() {
           <span className="text-xs text-muted-foreground hidden sm:block">
             Landes (40) & Pyrénées-Atl. (64)
           </span>
-          <ThemeToggle />
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>
