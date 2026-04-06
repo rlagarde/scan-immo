@@ -366,6 +366,7 @@ export function PriceByCommuneChart({ data, topN }: { data: TimeSeriesByCommune[
               contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [Number(value).toLocaleString("fr-FR"), String(name)]}
+              itemSorter={(item: any) => -(Number(item.value) || 0)}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {communesList.map((c, i) => (
