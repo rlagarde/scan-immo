@@ -19,6 +19,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
 
+const CommunePicker = dynamic(
+  () => import("@/components/map/commune-picker").then((mod) => mod.CommunePicker),
+  { ssr: false }
+);
 const DvfHeatmap = dynamic(
   () => import("@/components/map/dvf-heatmap").then((mod) => mod.DvfHeatmap),
   { ssr: false, loading: () => <MapSkeleton /> }
@@ -161,6 +165,12 @@ export default function TerrainsPage() {
           </TabsContent>
 
           <TabsContent value="communes" className="mt-4 space-y-4">
+            <CommunePicker
+              selected={filters.communes}
+              onChange={(v) => setFilters({ ...filters, communes: v })}
+              departements={filters.departements}
+            />
+
             <CommuneEvolutionTable
               data={timeSeriesByCommune}
               communeStats={communeStats}

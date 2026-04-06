@@ -21,7 +21,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
 
-// Dynamic import for map (no SSR - maplibre needs window)
+// Dynamic imports for maps (no SSR - maplibre needs window)
+const CommunePicker = dynamic(
+  () => import("@/components/map/commune-picker").then((mod) => mod.CommunePicker),
+  { ssr: false }
+);
 const DvfMap = dynamic(
   () => import("@/components/map/dvf-map").then((mod) => mod.DvfMap),
   { ssr: false, loading: () => <MapSkeleton /> }
@@ -168,6 +172,12 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="communes" className="mt-4 space-y-4">
+            <CommunePicker
+              selected={filters.communes}
+              onChange={(v) => setFilters({ ...filters, communes: v })}
+              departements={filters.departements}
+            />
+
             <CommuneEvolutionTable
               data={timeSeriesByCommune}
               communeStats={communeStats}
