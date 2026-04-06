@@ -98,6 +98,7 @@ export function CommunePicker({
     <div className="space-y-2">
       <div className="h-[250px] rounded-lg overflow-hidden border">
         <Map
+          key={tileUrl}
           ref={mapRef}
           initialViewState={INITIAL_VIEW}
           style={{ width: "100%", height: "100%" }}
@@ -172,7 +173,7 @@ export function CommunePicker({
                 layout={{
                   "text-field": ["get", "nom"],
                   "text-size": ["interpolate", ["linear"], ["zoom"], 9, 9, 12, 12],
-                  "text-font": ["Noto Sans Regular"],
+                  "text-font": ["Open Sans Regular"],
                   "text-max-width": 8,
                 }}
                 paint={{

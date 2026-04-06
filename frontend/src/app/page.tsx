@@ -41,10 +41,12 @@ function MobileFiltersSheet({
   filters,
   onFilterChange,
   communes,
+  defaultFilters,
 }: {
   filters: Filters;
   onFilterChange: (f: Filters) => void;
   communes: string[];
+  defaultFilters: Filters;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -64,10 +66,11 @@ function MobileFiltersSheet({
               onFilterChange={onFilterChange}
               communes={communes}
               vertical
+              defaultFilters={defaultFilters}
             />
           </div>
           <div className="mt-6 pt-4 border-t">
-            <ThemeToggle />
+            <ThemeToggle showLabel />
           </div>
         </SheetContent>
       </Sheet>
@@ -137,6 +140,7 @@ export default function Home() {
             filters={filters}
             onFilterChange={setFilters}
             communes={communes}
+            defaultFilters={HABITATION_FILTERS}
           />
           <nav className="flex rounded-md border bg-muted p-0.5 gap-0.5 w-fit">
             {[
@@ -170,6 +174,7 @@ export default function Home() {
               filters={filters}
               onFilterChange={setFilters}
               communes={communes}
+              defaultFilters={HABITATION_FILTERS}
             />
           }
         />

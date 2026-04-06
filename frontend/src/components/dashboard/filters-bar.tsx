@@ -10,13 +10,15 @@ import {
 import { MultiSelect } from "@/components/ui/multi-select";
 import { YearRangePicker } from "@/components/ui/year-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Filters } from "@/hooks/use-dvf";
+import { RotateCcw } from "lucide-react";
+import type { Filters, DEFAULT_FILTERS } from "@/hooks/use-dvf";
 
 interface FiltersBarProps {
   filters: Filters;
   onFilterChange: (filters: Filters) => void;
   communes: string[];
   vertical?: boolean;
+  defaultFilters?: Filters;
 }
 
 const YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
@@ -46,6 +48,7 @@ export function FiltersBar({
   onFilterChange,
   communes,
   vertical,
+  defaultFilters,
 }: FiltersBarProps) {
   const update = (partial: Partial<Filters>) =>
     onFilterChange({ ...filters, ...partial });
@@ -96,6 +99,17 @@ export function FiltersBar({
         />
         <span className="text-xs text-muted-foreground">Exclure ventes multiples</span>
       </label>
+
+      {defaultFilters && (
+        <button
+          type="button"
+          onClick={() => onFilterChange(defaultFilters)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors self-center"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Réinitialiser
+        </button>
+      )}
     </div>
   );
 }
@@ -126,6 +140,7 @@ export function FiltersBarTerrain({
   onFilterChange,
   communes,
   vertical,
+  defaultFilters,
 }: FiltersBarProps) {
   const update = (partial: Partial<Filters>) =>
     onFilterChange({ ...filters, ...partial });
@@ -177,6 +192,17 @@ export function FiltersBarTerrain({
           ))}
         </SelectContent>
       </Select>
+
+      {defaultFilters && (
+        <button
+          type="button"
+          onClick={() => onFilterChange(defaultFilters)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors self-center"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Réinitialiser
+        </button>
+      )}
     </div>
   );
 }

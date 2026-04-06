@@ -4,7 +4,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ showLabel = false }: { showLabel?: boolean } = {}) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -22,7 +22,7 @@ export function ThemeToggle() {
       title={`Thème : ${label}`}
     >
       <Icon className="h-4 w-4" />
-      <span className="hidden sm:inline">{label}</span>
+      {showLabel ? <span>{label}</span> : <span className="hidden sm:inline">{label}</span>}
     </button>
   );
 }

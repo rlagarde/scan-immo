@@ -124,6 +124,7 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
     <div className="w-full">
       <div className="h-[400px] lg:h-[500px] rounded-lg overflow-hidden border">
       <Map
+        key={tileUrl}
         ref={mapRef}
         initialViewState={INITIAL_VIEW}
         style={{ width: "100%", height: "100%" }}
