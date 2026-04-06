@@ -17,12 +17,13 @@ const TILE_DARK =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
 const INITIAL_VIEW = {
-  longitude: -1.0,
-  latitude: 43.5,
-  zoom: 7.5,
+  longitude: -0.8,
+  latitude: 44.0,
+  zoom: 7,
 };
 
 const GEO_URLS: Record<string, string> = {
+  "33": "/data/geo/communes-33.geojson",
   "40": "/data/geo/communes-40.geojson",
   "64": "/data/geo/communes-64.geojson",
 };

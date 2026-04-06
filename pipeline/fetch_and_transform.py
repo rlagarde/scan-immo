@@ -17,13 +17,14 @@ import duckdb
 import os
 import sys
 
-DEPARTMENTS = ["40", "64"]
+DEPARTMENTS = ["33", "40", "64"]
 GEO_YEARS = range(2020, 2026)
 GEO_URL = "https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dep}.csv.gz"
 
 # Dataset "Compilation DVF par département" (snapshot 2023-05-05, couvre 2018-2022)
 # On l'utilise uniquement pour 2018-2019 (geo-dvf couvre 2020+)
 COMPILATION_URLS = {
+    "33": "https://static.data.gouv.fr/resources/compilation-des-donnees-de-valeurs-foncieres-dvf-par-departement/20230505-170440/dvf-33.csv",
     "40": "https://static.data.gouv.fr/resources/compilation-des-donnees-de-valeurs-foncieres-dvf-par-departement/20230505-170401/dvf-40.csv",
     "64": "https://static.data.gouv.fr/resources/compilation-des-donnees-de-valeurs-foncieres-dvf-par-departement/20230505-170215/dvf-64.csv",
 }
@@ -58,7 +59,7 @@ def run_pipeline():
             url = GEO_URL.format(year=year, dep=dep)
             geo_parts.append(
                 f"SELECT {cols_select} FROM read_csv_auto('{url}', "
-                f"compression='gzip', all_varchar=true, header=true)"
+                f"compression='gzip', all_varchar=true, header=true, ignore_errors=true)"
             )
 
     # Source 2 : compilation par dept (2018-2022), un fichier par dep, CSV non compressé
@@ -68,7 +69,7 @@ def run_pipeline():
     for dep, url in COMPILATION_URLS.items():
         compilation_parts.append(
             f"SELECT {cols_select} FROM read_csv_auto('{url}', "
-            f"all_varchar=true, header=true) "
+            f"all_varchar=true, header=true, ignore_errors=true) "
             f"WHERE annee IN ({compilation_years_sql})"
         )
 

@@ -41,7 +41,7 @@ export function NavHeader({ trailing }: { trailing?: React.ReactNode } = {}) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground hidden sm:block">
-            Landes (40) & Pyrénées-Atl. (64)
+            Gironde (33), Landes (40) & Pyrénées-Atl. (64)
           </span>
           <div className="hidden sm:block">
             <ThemeToggle />

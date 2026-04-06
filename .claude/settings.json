@@ -45,7 +45,9 @@
       "Bash(curl -s \"https://www.data.gouv.fr/api/1/datasets/5d78f093634f411f434cd637/\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(r['title'],'->',r['url']\\) for r in d.get\\('resources',[]\\)[:40]]\")",
       "Bash(python -c ':*)",
-      "Bash(md5 d:/WORKSPACE/PERSO/DVF/public/data/dvf.parquet d:/WORKSPACE/PERSO/DVF/frontend/public/data/dvf.parquet)"
+      "Bash(md5 d:/WORKSPACE/PERSO/DVF/public/data/dvf.parquet d:/WORKSPACE/PERSO/DVF/frontend/public/data/dvf.parquet)",
+      "Bash(curl -s \"https://www.data.gouv.fr/api/1/datasets/642205e1f2a0d0428a738699/\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); r=[x for x in d.get\\('resources',[]\\) if '33' in x.get\\('title',''\\)[:4]]; [print\\(x['title'],'->',x['url']\\) for x in r]\")"
     ]
   }
 }

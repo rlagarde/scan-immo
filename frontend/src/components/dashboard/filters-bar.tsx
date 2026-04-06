@@ -22,6 +22,7 @@ interface FiltersBarProps {
 const YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
 const DEPARTEMENT_OPTIONS = [
+  { value: "33", label: "33 — Gironde" },
   { value: "40", label: "40 — Landes" },
   { value: "64", label: "64 — Pyrénées-Atl." },
 ];

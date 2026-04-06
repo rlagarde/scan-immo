@@ -16,9 +16,9 @@ import type { MapRef } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
 
 const INITIAL_VIEW = {
-  longitude: -1.0,
-  latitude: 43.5,
-  zoom: 8,
+  longitude: -0.8,
+  latitude: 44.0,
+  zoom: 7,
 };
 
 const TILE_LIGHT =
