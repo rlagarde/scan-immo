@@ -61,8 +61,6 @@ interface PopupInfo {
   properties: Record<string, any>;
 }
 
-const INTERACTIVE_ZOOM = 12;
-
 export function DvfHeatmap({ points }: { points: MapPoint[] }) {
   const { resolvedTheme } = useTheme();
   const mapRef = useRef<MapRef>(null);
@@ -83,6 +81,24 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
         setPopupInfo(null);
         return;
       }
+
+      // Cluster click → zoom in
+      if (feature.properties?.cluster) {
+        const map = mapRef.current?.getMap();
+        if (map) {
+          const source = map.getSource("terrain-data") as any;
+          if (source?.getClusterExpansionZoom) {
+            const result = source.getClusterExpansionZoom(feature.properties.cluster_id);
+            if (result && typeof result.then === "function") {
+              result.then((zoom: number) => {
+                map.easeTo({ center: feature.geometry.coordinates, zoom: zoom + 1 });
+              });
+            }
+          }
+        }
+        return;
+      }
+
       const coords = feature.geometry.coordinates;
       setPopupInfo({
         longitude: coords[0],
@@ -101,86 +117,82 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
         initialViewState={INITIAL_VIEW}
         style={{ width: "100%", height: "100%" }}
         mapStyle={tileUrl}
-        interactiveLayerIds={["terrain-points"]}
+        fadeDuration={0}
+        interactiveLayerIds={["terrain-clusters", "terrain-points"]}
         onClick={onClick}
         cursor={cursor}
         onMouseEnter={() => setCursor("pointer")}
-        onMouseLeave={() => {
-          const zoom = mapRef.current?.getZoom() ?? 0;
-          setCursor(zoom >= INTERACTIVE_ZOOM ? "crosshair" : "grab");
-        }}
-        onZoomEnd={() => {
-          const zoom = mapRef.current?.getZoom() ?? 0;
-          setCursor(zoom >= INTERACTIVE_ZOOM ? "crosshair" : "grab");
-        }}
+        onMouseLeave={() => setCursor("grab")}
       >
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" />
         <ScaleControl position="bottom-left" />
 
-        <Source id="terrain-data" type="geojson" data={geojson}>
-          {/* Heatmap layer — visible at low zoom, fades at high zoom */}
+        <Source
+          id="terrain-data"
+          type="geojson"
+          data={geojson}
+          cluster={true}
+          clusterMaxZoom={11}
+          clusterRadius={50}
+        >
+          {/* Cluster circles */}
           <Layer
-            id="terrain-heat"
-            type="heatmap"
-            maxzoom={13}
+            id="terrain-clusters"
+            type="circle"
+            filter={["has", "point_count"]}
             paint={{
-              "heatmap-weight": [
-                "interpolate",
-                ["linear"],
-                ["get", "valeur_fonciere"],
-                0, 0,
-                50000, 0.3,
-                150000, 0.6,
-                500000, 1,
+              "circle-color": [
+                "step",
+                ["get", "point_count"],
+                "#fde68a",
+                50, "#fcd34d",
+                200, "#f59e0b",
+                1000, "#ea580c",
+                5000, "#c2410c",
               ],
-              "heatmap-intensity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                0, 1,
-                13, 3,
+              "circle-radius": [
+                "step",
+                ["get", "point_count"],
+                15,
+                50, 20,
+                200, 25,
+                1000, 32,
+                5000, 40,
               ],
-              "heatmap-color": [
-                "interpolate",
-                ["linear"],
-                ["heatmap-density"],
-                0, "rgba(245,158,11,0)",
-                0.2, "rgba(253,230,138,0.4)",
-                0.4, "rgba(252,211,77,0.5)",
-                0.6, "rgba(245,158,11,0.6)",
-                0.8, "rgba(234,88,12,0.7)",
-                1, "rgba(194,65,12,0.8)",
-              ],
-              "heatmap-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                0, 2,
-                8, 15,
-                13, 25,
-              ],
-              "heatmap-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                11, 0.6,
-                13, 0,
-              ],
+              "circle-stroke-width": 2,
+              "circle-stroke-color": resolvedTheme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.7)",
             }}
           />
 
-          {/* Points — visible at high zoom */}
+          {/* Cluster count label */}
+          <Layer
+            id="terrain-cluster-count"
+            type="symbol"
+            filter={["has", "point_count"]}
+            layout={{
+              "text-field": "{point_count_abbreviated}",
+              "text-size": 12,
+              "text-font": ["Noto Sans Bold"],
+              "text-allow-overlap": true,
+            }}
+            paint={{
+              "text-color": resolvedTheme === "dark" ? "#fff" : "#1a1a1a",
+            }}
+          />
+
+          {/* Individual terrain points (unclustered) */}
           <Layer
             id="terrain-points"
             type="circle"
-            minzoom={10}
+            filter={["!", ["has", "point_count"]]}
             paint={{
               "circle-radius": [
                 "interpolate",
                 ["linear"],
                 ["zoom"],
-                10, 3,
+                8, 2,
+                12, 4,
                 15, 8,
               ],
               "circle-color": [
@@ -196,13 +208,8 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
               ],
               "circle-stroke-width": 1,
               "circle-stroke-color": resolvedTheme === "dark" ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)",
-              "circle-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10, 0,
-                12, 0.8,
-              ],
+              "circle-opacity": 0.8,
+              "circle-stroke-opacity": 0.8,
             }}
           />
         </Source>

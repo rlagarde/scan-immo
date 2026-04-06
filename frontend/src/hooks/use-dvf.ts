@@ -18,7 +18,7 @@ export interface Filters {
 export const DEFAULT_FILTERS: Filters = {
   departements: [],
   typesLocal: [],
-  anneeMin: 2020,
+  anneeMin: 2018,
   anneeMax: 2025,
   communes: [],
   pieces: [],
@@ -123,12 +123,14 @@ export interface TimeSeriesByPieces {
   annee: number;
   pieces: number;
   prix_median: number;
+  nb_transactions: number;
 }
 
 export interface TimeSeriesByCommune {
   annee: number;
   nom_commune: string;
   nb_transactions: number;
+  prix_m2_median: number | null;
 }
 
 export interface CrosstabRow {
@@ -172,7 +174,7 @@ export function useDvf(initialFilters: Filters = DEFAULT_FILTERS) {
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
-    loadParquet("/data/dvf.parquet")
+    loadParquet(`/data/dvf.parquet?v=${Date.now()}`)
       .then(async () => {
         const communeList = await queryDvf<{ nom_commune: string }>(
           "SELECT DISTINCT nom_commune FROM dvf ORDER BY nom_commune"
@@ -218,7 +220,8 @@ export function useDvf(initialFilters: Filters = DEFAULT_FILTERS) {
           queryDvf<TimeSeriesByPieces>(`
             SELECT annee::INTEGER as annee,
               nombre_pieces_principales::INTEGER as pieces,
-              MEDIAN(valeur_fonciere)::INTEGER as prix_median
+              MEDIAN(valeur_fonciere)::INTEGER as prix_median,
+              COUNT(*)::INTEGER as nb_transactions
             FROM dvf ${where}
               AND nombre_pieces_principales IS NOT NULL
               AND nombre_pieces_principales BETWEEN 1 AND 6
@@ -227,11 +230,12 @@ export function useDvf(initialFilters: Filters = DEFAULT_FILTERS) {
           `),
           queryDvf<TimeSeriesByCommune>(`
             SELECT t.annee::INTEGER as annee, t.nom_commune,
-              COUNT(*)::INTEGER as nb_transactions
+              COUNT(*)::INTEGER as nb_transactions,
+              MEDIAN(t.prix_m2)::INTEGER as prix_m2_median
             FROM dvf t
             WHERE t.nom_commune IN (
               SELECT nom_commune FROM dvf ${where}
-              GROUP BY nom_commune ORDER BY COUNT(*) DESC LIMIT 15
+              GROUP BY nom_commune ORDER BY COUNT(*) DESC LIMIT 30
             )
             ${where ? where.replace("WHERE", "AND") : ""}
             GROUP BY t.annee, t.nom_commune

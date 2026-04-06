@@ -10,7 +10,7 @@ import {
   PriceByCommuneChart,
   CommunePrixMedianChart,
 } from "@/components/dashboard/charts";
-import { CommuneTable } from "@/components/dashboard/commune-table";
+import { CommuneEvolutionTable } from "@/components/dashboard/commune-evolution";
 import { FocusCommune } from "@/components/dashboard/focus-commune";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
@@ -111,8 +111,9 @@ export default function TerrainsPage() {
           </TabsContent>
 
           <TabsContent value="communes" className="mt-4 space-y-4">
-            <CommuneTable
-              data={communeStats}
+            <CommuneEvolutionTable
+              data={timeSeriesByCommune}
+              communeStats={communeStats}
               onCommuneClick={setFocusCommune}
             />
 

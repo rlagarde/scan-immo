@@ -5,16 +5,14 @@ import { useDvf, type Filters, DEFAULT_FILTERS } from "@/hooks/use-dvf";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { FiltersBar } from "@/components/dashboard/filters-bar";
 import {
-  PriceEvolutionChart,
-  PriceM2ByTypeChart,
   TransactionsByTypeChart,
-  PriceDistributionChart,
+  PriceM2ByTypeChart,
+  TransactionsByPiecesChart,
   PriceByPiecesChart,
+  PriceDistributionChart,
   PriceByCommuneChart,
-  CommunePrixM2Chart,
-  CommunePrixMedianChart,
 } from "@/components/dashboard/charts";
-import { CommuneTable } from "@/components/dashboard/commune-table";
+import { CommuneEvolutionTable } from "@/components/dashboard/commune-evolution";
 import { FocusCommune } from "@/components/dashboard/focus-commune";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
@@ -108,24 +106,19 @@ export default function Home() {
 
           <TabsContent value="prix" className="mt-4 space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <PriceEvolutionChart data={timeSeries} />
-              <PriceM2ByTypeChart data={timeSeriesByType} />
-              <PriceByPiecesChart data={timeSeriesByPieces} />
               <TransactionsByTypeChart data={timeSeriesByType} />
+              <PriceM2ByTypeChart data={timeSeriesByType} />
+              <TransactionsByPiecesChart data={timeSeriesByPieces} />
+              <PriceByPiecesChart data={timeSeriesByPieces} />
+              <PriceByCommuneChart data={timeSeriesByCommune} topN={10} />
               <PriceDistributionChart data={priceDistribution} />
-            </div>
-
-            <PriceByCommuneChart data={timeSeriesByCommune} topN={5} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <CommunePrixM2Chart data={communeStats} />
-              <CommunePrixMedianChart data={communeStats} />
             </div>
           </TabsContent>
 
           <TabsContent value="communes" className="mt-4 space-y-4">
-            <CommuneTable
-              data={communeStats}
+            <CommuneEvolutionTable
+              data={timeSeriesByCommune}
+              communeStats={communeStats}
               onCommuneClick={setFocusCommune}
             />
 

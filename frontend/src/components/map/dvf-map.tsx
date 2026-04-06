@@ -71,27 +71,6 @@ const PRICE_COLOR_STOPS: (string | number)[] = [
   600000, "#c2410c",
 ];
 
-function createSquareSDF(size: number) {
-  const data = new Uint8ClampedArray(size * size * 4);
-  const half = size / 2;
-  const squareHalf = half - 2;
-  const buffer = 3;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const dx = squareHalf - Math.abs(x - half + 0.5);
-      const dy = squareHalf - Math.abs(y - half + 0.5);
-      const dist = Math.min(dx, dy);
-      const alpha = Math.max(0, Math.min(255, 192 + (dist / buffer) * 64));
-      const idx = (y * size + x) * 4;
-      data[idx] = 0;
-      data[idx + 1] = 0;
-      data[idx + 2] = 0;
-      data[idx + 3] = Math.round(alpha);
-    }
-  }
-  return { width: size, height: size, data };
-}
-
 export function DvfMap({ points }: { points: MapPoint[] }) {
   const { resolvedTheme } = useTheme();
   const mapRef = useRef<MapRef>(null);
@@ -104,12 +83,6 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
     setGeojson(pointsToGeoJSON(points));
   }, [points]);
 
-  const onMapLoad = useCallback(() => {
-    const map = mapRef.current?.getMap();
-    if (!map || map.hasImage("square-sdf")) return;
-    map.addImage("square-sdf", createSquareSDF(24), { sdf: true });
-  }, []);
-
   const onClick = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (event: any) => {
@@ -118,6 +91,25 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
         setPopupInfo(null);
         return;
       }
+
+      // Cluster click → zoom in
+      if (feature.properties?.cluster) {
+        const map = mapRef.current?.getMap();
+        if (map) {
+          const source = map.getSource("hab-data") as any;
+          if (source?.getClusterExpansionZoom) {
+            const result = source.getClusterExpansionZoom(feature.properties.cluster_id);
+            // Handle both promise and callback APIs
+            if (result && typeof result.then === "function") {
+              result.then((zoom: number) => {
+                map.easeTo({ center: feature.geometry.coordinates, zoom: zoom + 1 });
+              });
+            }
+          }
+        }
+        return;
+      }
+
       const coords = feature.geometry.coordinates;
       setPopupInfo({
         longitude: coords[0],
@@ -136,84 +128,103 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
         initialViewState={INITIAL_VIEW}
         style={{ width: "100%", height: "100%" }}
         mapStyle={tileUrl}
-        interactiveLayerIds={["hab-maison-circles", "hab-appart-symbols"]}
-        onLoad={onMapLoad}
+        fadeDuration={0}
+        interactiveLayerIds={["hab-clusters", "hab-maison-circles", "hab-appart-circles"]}
         onClick={onClick}
         cursor={cursor}
         onMouseEnter={() => setCursor("pointer")}
-        onMouseLeave={() => {
-          const zoom = mapRef.current?.getZoom() ?? 0;
-          setCursor(zoom >= 12 ? "crosshair" : "grab");
-        }}
-        onZoomEnd={() => {
-          const zoom = mapRef.current?.getZoom() ?? 0;
-          setCursor(zoom >= 12 ? "crosshair" : "grab");
-        }}
+        onMouseLeave={() => setCursor("grab")}
       >
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" />
         <ScaleControl position="bottom-left" />
 
-        <Source id="hab-data" type="geojson" data={geojson}>
-          {/* Heatmap — visible at low zoom, fades out */}
+        <Source
+          id="hab-data"
+          type="geojson"
+          data={geojson}
+          cluster={true}
+          clusterMaxZoom={11}
+          clusterRadius={50}
+        >
+          {/* Cluster circles */}
           <Layer
-            id="hab-heat"
-            type="heatmap"
-            maxzoom={14}
+            id="hab-clusters"
+            type="circle"
+            filter={["has", "point_count"]}
             paint={{
-              "heatmap-weight": [
-                "interpolate",
-                ["linear"],
-                ["get", "valeur_fonciere"],
-                0, 0,
-                100000, 0.3,
-                300000, 0.6,
-                600000, 1,
+              "circle-color": [
+                "step",
+                ["get", "point_count"],
+                "#fde68a",   // < 50
+                50, "#fcd34d",
+                200, "#f59e0b",
+                1000, "#ea580c",
+                5000, "#c2410c",
               ],
-              "heatmap-intensity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                0, 1,
-                13, 3,
+              "circle-radius": [
+                "step",
+                ["get", "point_count"],
+                15,          // < 50
+                50, 20,
+                200, 25,
+                1000, 32,
+                5000, 40,
               ],
-              "heatmap-color": [
-                "interpolate",
-                ["linear"],
-                ["heatmap-density"],
-                0, "rgba(245,158,11,0)",
-                0.2, "rgba(253,230,138,0.4)",
-                0.4, "rgba(252,211,77,0.5)",
-                0.6, "rgba(245,158,11,0.6)",
-                0.8, "rgba(234,88,12,0.7)",
-                1, "rgba(194,65,12,0.8)",
-              ],
-              "heatmap-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                0, 2,
-                8, 15,
-                13, 25,
-              ],
-              "heatmap-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                11, 0.6,
-                14, 0,
-              ],
+              "circle-stroke-width": 2,
+              "circle-stroke-color": resolvedTheme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.7)",
             }}
           />
 
-          {/* Maison — round circles */}
+          {/* Cluster count label */}
+          <Layer
+            id="hab-cluster-count"
+            type="symbol"
+            filter={["has", "point_count"]}
+            layout={{
+              "text-field": "{point_count_abbreviated}",
+              "text-size": 12,
+              "text-font": ["Noto Sans Bold"],
+              "text-allow-overlap": true,
+            }}
+            paint={{
+              "text-color": resolvedTheme === "dark" ? "#fff" : "#1a1a1a",
+            }}
+          />
+
+          {/* Maison — thick brown stroke (unclustered) */}
           <Layer
             id="hab-maison-circles"
             type="circle"
-            minzoom={10}
-            filter={["==", ["get", "type_local"], "Maison"]}
+            filter={["all",
+              ["!", ["has", "point_count"]],
+              ["==", ["get", "type_local"], "Maison"],
+            ]}
             paint={{
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2, 14, 6, 18, 12],
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 2, 12, 4, 14, 6, 18, 12],
+              "circle-color": [
+                "interpolate",
+                ["linear"],
+                ["get", "valeur_fonciere"],
+                ...PRICE_COLOR_STOPS,
+              ],
+              "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 8, 1.5, 14, 3, 18, 4],
+              "circle-stroke-color": resolvedTheme === "dark" ? "#78350f" : "#92400e",
+              "circle-opacity": 0.85,
+              "circle-stroke-opacity": 0.9,
+            }}
+          />
+
+          {/* Appartement — thin stroke (unclustered) */}
+          <Layer
+            id="hab-appart-circles"
+            type="circle"
+            filter={["all",
+              ["!", ["has", "point_count"]],
+              ["==", ["get", "type_local"], "Appartement"],
+            ]}
+            paint={{
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 1.5, 12, 3, 14, 5, 18, 10],
               "circle-color": [
                 "interpolate",
                 ["linear"],
@@ -222,49 +233,8 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
               ],
               "circle-stroke-width": 1,
               "circle-stroke-color": resolvedTheme === "dark" ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)",
-              "circle-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10, 0,
-                12, 0.85,
-              ],
-              "circle-stroke-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10, 0,
-                12, 0.85,
-              ],
-            }}
-          />
-
-          {/* Appartement — square symbols */}
-          <Layer
-            id="hab-appart-symbols"
-            type="symbol"
-            minzoom={10}
-            filter={["==", ["get", "type_local"], "Appartement"]}
-            layout={{
-              "icon-image": "square-sdf",
-              "icon-size": ["interpolate", ["linear"], ["zoom"], 10, 0.25, 14, 0.5, 18, 0.85],
-              "icon-allow-overlap": true,
-              "icon-ignore-placement": true,
-            }}
-            paint={{
-              "icon-color": [
-                "interpolate",
-                ["linear"],
-                ["get", "valeur_fonciere"],
-                ...PRICE_COLOR_STOPS,
-              ],
-              "icon-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10, 0,
-                12, 0.85,
-              ],
+              "circle-opacity": 0.85,
+              "circle-stroke-opacity": 0.85,
             }}
           />
         </Source>
@@ -318,11 +288,11 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
         ))}
         <span className="ml-2 border-l pl-2 flex items-center gap-2">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-full bg-amber-400" />
+            <span className="inline-block w-4 h-4 rounded-full bg-amber-400 ring-[3px] ring-amber-900" />
             Maison
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 bg-amber-400" />
+            <span className="inline-block w-3 h-3 rounded-full bg-amber-400" />
             Appart.
           </span>
         </span>

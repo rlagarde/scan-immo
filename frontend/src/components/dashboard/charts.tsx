@@ -219,6 +219,52 @@ export function CommunePrixM2Chart({ data, onCommuneClick }: { data: CommuneStat
   );
 }
 
+// --- Transactions par nb pièces (stacked bar) ---
+export function TransactionsByPiecesChart({ data }: { data: TimeSeriesByPieces[] }) {
+  const pieces = [...new Set(data.map((d) => d.pieces))].sort();
+  const years = [...new Set(data.map((d) => d.annee))].sort();
+  const pivoted = years.map((annee) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row: any = { annee };
+    pieces.forEach((p) => {
+      const match = data.find((d) => d.annee === annee && d.pieces === p);
+      row[`${p} pce${p > 1 ? "s" : ""}`] = match?.nb_transactions ?? 0;
+    });
+    return row;
+  });
+  const keys = pieces.map((p) => `${p} pce${p > 1 ? "s" : ""}`);
+  const PIECES_COLORS_BAR: Record<number, string> = {
+    1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#2563eb", 5: "#8b5cf6", 6: "#ec4899",
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Transactions par nombre de pièces</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={pivoted}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis dataKey="annee" className="text-xs" />
+            <YAxis className="text-xs" width={50} />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              cursor={BAR_CURSOR}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any, name: any) => [Number(value).toLocaleString("fr-FR"), String(name)]}
+            />
+            <Legend />
+            {keys.map((k, i) => (
+              <Bar key={k} dataKey={k} fill={PIECES_COLORS_BAR[pieces[i]] || "#666"} stackId="a" />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
 // --- Évolution prix médian par nb pièces ---
 const PIECES_COLORS: Record<number, string> = {
   1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#2563eb", 5: "#8b5cf6", 6: "#ec4899",
@@ -304,7 +350,7 @@ export function PriceByCommuneChart({ data, topN }: { data: TimeSeriesByCommune[
         <CardTitle className="text-base">Ventes par commune (top {topN ?? 15})</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250}>
           <LineChart data={pivoted}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis dataKey="annee" className="text-xs" />
