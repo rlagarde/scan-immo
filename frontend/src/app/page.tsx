@@ -16,7 +16,7 @@ import { CommuneEvolutionTable } from "@/components/dashboard/commune-evolution"
 import { FocusCommune } from "@/components/dashboard/focus-commune";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, SlidersHorizontal, MapPin, TrendingUp, Building2 } from "lucide-react";
-import { NavHeader } from "@/components/nav-header";
+import { NavHeader, NavLinks } from "@/components/nav-header";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
@@ -57,6 +57,7 @@ function MobileFiltersSheet({
           <SheetHeader>
             <SheetTitle>Filtres</SheetTitle>
           </SheetHeader>
+          <NavLinks />
           <div className="flex flex-col gap-3 mt-2">
             <FiltersBar
               filters={filters}

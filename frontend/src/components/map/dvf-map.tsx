@@ -224,7 +224,7 @@ export function DvfMap({ points }: { points: MapPoint[] }) {
               ["==", ["get", "type_local"], "Appartement"],
             ]}
             paint={{
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 1.5, 12, 3, 14, 5, 18, 10],
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 2, 12, 3.5, 14, 5.5, 18, 11],
               "circle-color": [
                 "interpolate",
                 ["linear"],
