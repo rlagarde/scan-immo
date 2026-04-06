@@ -103,7 +103,8 @@ export default function TerrainsPage() {
     transactions,
   } = useDvf(TERRAIN_FILTERS);
 
-  const [tab, setTab] = useState("carte");
+  const [tab, setTabRaw] = useState("carte");
+  const setTab = (v: string) => { setTabRaw(v); window.scrollTo({ top: 0 }); };
 
   if (loading) {
     return (
