@@ -33,9 +33,9 @@ const TOOLTIP_STYLE: React.CSSProperties = {
 const BAR_CURSOR = { fill: "currentColor", fillOpacity: 0.08 };
 
 const TYPE_COLORS: Record<string, string> = {
-  Maison: "#2563eb",
+  Maison: "#92400e",
   Appartement: "#f59e0b",
-  Terrain: "#10b981",
+  Terrain: "#fbbf24",
 };
 
 function formatEuro(value: number): string {
@@ -177,7 +177,7 @@ export function PriceDistributionChart({ data }: { data: PriceDistBucket[] }) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [Number(value).toLocaleString("fr-FR"), "Transactions"]}
             />
-            <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill="#d97706" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
@@ -234,7 +234,7 @@ export function TransactionsByPiecesChart({ data }: { data: TimeSeriesByPieces[]
   });
   const keys = pieces.map((p) => `${p} pce${p > 1 ? "s" : ""}`);
   const PIECES_COLORS_BAR: Record<number, string> = {
-    1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#2563eb", 5: "#8b5cf6", 6: "#ec4899",
+    1: "#fbbf24", 2: "#f59e0b", 3: "#d97706", 4: "#b45309", 5: "#92400e", 6: "#78350f",
   };
 
   return (
@@ -267,7 +267,7 @@ export function TransactionsByPiecesChart({ data }: { data: TimeSeriesByPieces[]
 
 // --- Évolution prix médian par nb pièces ---
 const PIECES_COLORS: Record<number, string> = {
-  1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#2563eb", 5: "#8b5cf6", 6: "#ec4899",
+  1: "#fbbf24", 2: "#f59e0b", 3: "#d97706", 4: "#b45309", 5: "#92400e", 6: "#78350f",
 };
 
 export function PriceByPiecesChart({ data }: { data: TimeSeriesByPieces[] }) {
@@ -332,7 +332,14 @@ export function PriceByCommuneChart({ data, topN }: { data: TimeSeriesByCommune[
     const topSet = new Set(top);
     filtered = data.filter((d) => topSet.has(d.nom_commune));
   }
-  const communesList = [...new Set(filtered.map((d) => d.nom_commune))];
+  // Order communes by total transactions desc
+  const communeTotals = new Map<string, number>();
+  filtered.forEach((d) => {
+    communeTotals.set(d.nom_commune, (communeTotals.get(d.nom_commune) ?? 0) + d.nb_transactions);
+  });
+  const communesList = [...communeTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([c]) => c);
   const years = [...new Set(filtered.map((d) => d.annee))].sort();
   const pivoted = years.map((annee) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
