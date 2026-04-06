@@ -173,7 +173,7 @@ export function DvfHeatmap({ points }: { points: MapPoint[] }) {
             layout={{
               "text-field": "{point_count_abbreviated}",
               "text-size": 12,
-              "text-font": ["Noto Sans Bold"],
+              "text-font": ["Open Sans Bold"],
               "text-allow-overlap": true,
             }}
             paint={{

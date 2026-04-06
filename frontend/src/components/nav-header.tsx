@@ -10,7 +10,7 @@ const LINKS = [
   { href: "/terrains", label: "Terrains", icon: TreePine },
 ] as const;
 
-export function NavHeader() {
+export function NavHeader({ trailing }: { trailing?: React.ReactNode } = {}) {
   const pathname = usePathname();
 
   return (
@@ -45,6 +45,7 @@ export function NavHeader() {
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>
+          {trailing}
         </div>
       </div>
     </header>
