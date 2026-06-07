@@ -18,7 +18,10 @@ import os
 import sys
 
 DEPARTMENTS = ["33", "40", "64"]
-GEO_YEARS = range(2020, 2026)
+# geo-dvf "latest" ne conserve qu'une fenetre glissante de 5 ans.
+# En juin 2026 : 2021-2025 (2020 est sorti de la fenetre).
+# Les annees sorties sont conservees localement (cf. pipeline/archive/).
+GEO_YEARS = range(2021, 2026)
 GEO_URL = "https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dep}.csv.gz"
 
 # Dataset "Compilation DVF par département" (snapshot 2023-05-05, couvre 2018-2022)
@@ -31,6 +34,13 @@ COMPILATION_URLS = {
 COMPILATION_YEARS = {"2018", "2019"}
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "data")
+
+# Archive locale : conserve les annees sorties de la fenetre glissante geo-dvf.
+# Format identique a dvf_final (genere par ce meme pipeline). Les annees presentes
+# dans l'archive mais absentes des sources actuelles (ex: 2020) sont reprises ici.
+ARCHIVE_PARQUET = os.path.join(
+    os.path.dirname(__file__), "archive", "dvf_latest_2026-04-06.parquet"
+)
 
 # Colonnes extraites de chaque source (identiques dans les deux schémas)
 COMMON_COLS = [
@@ -205,7 +215,36 @@ def run_pipeline():
     """)
 
     final_count = con.execute("SELECT COUNT(*) FROM dvf_final").fetchone()[0]
-    print(f"  -> {final_count} mutations uniques")
+    print(f"  -> {final_count} mutations uniques (sources latest + compilation)")
+
+    # Couche d'archive : reprend les annees sorties de la fenetre latest geo-dvf
+    # (ex: 2020), absentes des sources actuelles mais conservees localement.
+    if os.path.exists(ARCHIVE_PARQUET):
+        archive_path = ARCHIVE_PARQUET.replace(os.sep, "/")
+        source_years = con.execute(
+            "SELECT DISTINCT annee FROM dvf_final"
+        ).fetchdf()["annee"].tolist()
+        years_sql = ", ".join(str(int(y)) for y in source_years)
+        archive_years = con.execute(f"""
+            SELECT DISTINCT annee FROM '{archive_path}'
+            WHERE annee NOT IN ({years_sql})
+            ORDER BY annee
+        """).fetchdf()["annee"].tolist()
+
+        if archive_years:
+            print(f"Reprise depuis l'archive locale : annees {archive_years}")
+            con.execute(f"""
+            INSERT INTO dvf_final
+            SELECT * FROM '{archive_path}'
+            WHERE annee NOT IN ({years_sql})
+            """)
+        else:
+            print("Archive locale presente mais aucune annee supplementaire a reprendre")
+    else:
+        print(f"(Pas d'archive locale a {ARCHIVE_PARQUET})")
+
+    final_count = con.execute("SELECT COUNT(*) FROM dvf_final").fetchone()[0]
+    print(f"  -> {final_count} mutations uniques (avec archive)")
 
     # Stats rapides
     stats = con.execute("""
