@@ -10,6 +10,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useTheme } from "next-themes";
 import type { MapRef } from "react-map-gl/maplibre";
 import type { GeoJSON } from "geojson";
+import { MousePointerClick, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const TILE_LIGHT =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -86,6 +88,15 @@ export function CommunePicker({
   const selectedSet = new Set(selected);
   const allSelected = selected.length === 0;
 
+  // Texte d'aide adapte : insiste sur la selection multiple et l'action de toggle
+  const hint = hoveredCommune
+    ? selectedSet.has(hoveredCommune)
+      ? `${hoveredCommune} — cliquer pour retirer`
+      : `${hoveredCommune} — cliquer pour ajouter`
+    : selected.length > 0
+      ? `${selected.length} commune${selected.length > 1 ? "s" : ""} sélectionnée${selected.length > 1 ? "s" : ""} — cliquez-en d'autres pour les ajouter`
+      : "Cliquez sur la carte pour filtrer une ou plusieurs communes";
+
   // Build a filter expression for selected communes
   const selectedFilter = selected.length > 0
     ? ["in", ["get", "nom"], ["literal", selected]]
@@ -96,7 +107,7 @@ export function CommunePicker({
 
   return (
     <div className="space-y-2">
-      <div className="h-[250px] rounded-lg overflow-hidden border">
+      <div className="relative h-[250px] rounded-lg overflow-hidden border">
         <Map
           key={tileUrl}
           ref={mapRef}
@@ -185,27 +196,44 @@ export function CommunePicker({
             </Source>
           )}
         </Map>
+
+        {/* Barre d'aide rassemblée avec la carte (overlay haut-gauche,
+            laisse libre l'attribution en bas et le zoom en haut-droite) */}
+        <div className="pointer-events-none absolute left-2 top-2 flex max-w-[calc(100%-4rem)] items-center gap-2 rounded-md border bg-background/90 px-3 py-1.5 text-xs shadow-sm backdrop-blur">
+          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+            <MousePointerClick className="size-3.5 shrink-0 text-primary" />
+            <span className="truncate">{hint}</span>
+          </span>
+          {selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="pointer-events-auto shrink-0 font-medium text-primary hover:underline"
+            >
+              Tout réinitialiser
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Info bar */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-        <span>
-          {hoveredCommune
-            ? hoveredCommune
-            : selected.length > 0
-              ? `${selected.length} commune${selected.length > 1 ? "s" : ""} sélectionnée${selected.length > 1 ? "s" : ""}`
-              : "Cliquer pour sélectionner une commune"}
-        </span>
-        {selected.length > 0 && (
-          <button
-            type="button"
-            onClick={() => onChange([])}
-            className="text-primary hover:underline"
-          >
-            Tout réinitialiser
-          </button>
-        )}
-      </div>
+      {/* Communes sélectionnées : chips retirables */}
+      {selected.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 px-1">
+          {selected.map((nom) => (
+            <Badge
+              key={nom}
+              variant="secondary"
+              className="cursor-pointer gap-1 pr-1 hover:bg-secondary/70"
+              render={
+                <button type="button" onClick={() => onChange(selected.filter((c) => c !== nom))} />
+              }
+            >
+              {nom}
+              <X className="size-3" />
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
